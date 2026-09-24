@@ -211,11 +211,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Zoom control top-right
   L.control.zoom({ position: 'topright' }).addTo(map);
 
-  // Defined High-Resolution Unwatermarked Tile Layers
+  // Defined High-Resolution Unwatermarked Tile Layers (100% compatible with file:// and web servers)
   const tileLayers = {
-    osm: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    osm: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      attribution: 'Tiles &copy; Esri'
     }),
     esriSat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 18,
@@ -223,11 +223,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }),
     dark: L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 16,
-      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
+      attribution: 'Tiles &copy; Esri'
     })
   };
 
-  // Start with OpenStreetMap (Exact roads, landmarks, zero watermark)
+  // Start with Esri World Streets (Exact Chennai roads, landmarks, zero watermark, no 403 file:// blocks)
   let currentTileLayer = tileLayers.osm.addTo(map);
 
   // Layer Switcher Buttons
@@ -240,14 +240,6 @@ document.addEventListener('DOMContentLoaded', () => {
     currentTileLayer = tileLayers[name].addTo(map);
     [btnLayerOsm, btnLayerSat, btnLayerDark].forEach(b => b.classList.remove('active'));
     activeBtn.classList.add('active');
-    
-    // Toggle dark filter if needed
-    const mapContainer = document.getElementById('map');
-    if (name === 'dark') {
-      mapContainer.classList.add('dark-tiles');
-    } else {
-      mapContainer.classList.remove('dark-tiles');
-    }
   }
 
   btnLayerOsm.addEventListener('click', () => setTileLayer('osm', btnLayerOsm));
