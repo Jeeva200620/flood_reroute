@@ -1,0 +1,1111 @@
+/* =====================================================================
+   CHENNAI JAL-MARG: EXECUTIVE COMPACT DESIGN SYSTEM (SIH 2026)
+   Production-Grade, Pixel-Perfect, Full-Bleed Map Layout
+   ===================================================================== */
+
+:root {
+  --bg-dark: #070d18;
+  --bg-glass: rgba(13, 23, 42, 0.88);
+  --bg-glass-card: rgba(15, 25, 45, 0.94);
+  --border-glass: rgba(71, 98, 150, 0.32);
+  --border-glass-bright: rgba(56, 189, 248, 0.45);
+
+  --color-green: #10b981;
+  --color-orange: #f59e0b;
+  --color-red: #ef4444;
+  --color-cyan: #06b6d4;
+  --color-blue: #3b82f6;
+
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --shadow-lg: 0 12px 32px -4px rgba(0, 0, 0, 0.55), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =====================================================================
+   1. TOP COMPACT FLOATING BAR (HUD) - BALANCED & RESPONSIVE
+   ===================================================================== */
+
+.top-nav-bar {
+  height: 56px;
+  background: rgba(10, 18, 33, 0.96);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-glass);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  z-index: 1200;
+  flex-shrink: 0;
+  gap: 16px;
+  width: 100vw;
+}
+
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.radar-ping {
+  position: relative;
+  width: 22px;
+  height: 22px;
+}
+
+.ping-circle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--color-cyan);
+  animation: radar-ping 2s infinite cubic-bezier(0, 0.2, 0.8, 1);
+}
+
+.ping-core {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-cyan);
+  box-shadow: 0 0 8px var(--color-cyan);
+}
+
+@keyframes radar-ping {
+  0% { transform: scale(0.3); opacity: 1; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.brand-title {
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, #ffffff 40%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.1;
+}
+
+.badge-sih {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  background: rgba(14, 165, 233, 0.2);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  border-radius: 10px;
+  letter-spacing: 0.04em;
+}
+
+.brand-sub {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  line-height: 1.2;
+  margin-top: 1px;
+}
+
+/* Telemetry Mini Chips */
+.hud-telemetry {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.tele-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(22, 33, 56, 0.65);
+  border: 1px solid var(--border-glass);
+  padding: 4px 10px;
+  border-radius: 18px;
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+
+.chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chip-dot.live {
+  background: var(--color-green);
+  box-shadow: 0 0 6px var(--color-green);
+  animation: pulse-dot 1.5s infinite;
+}
+
+.chip-dot.green { background: var(--color-green); }
+.chip-dot.orange { background: var(--color-orange); }
+.chip-dot.red { background: var(--color-red); }
+.chip-dot.cyan { background: var(--color-cyan); }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.chip-title {
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 0.66rem;
+}
+
+.chip-val {
+  color: #f1f5f9;
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+}
+
+/* HUD Action Buttons */
+.hud-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.mode-toggle-group {
+  display: flex;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  padding: 2px;
+}
+
+.btn-mode {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-mode.active {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+}
+
+.btn-hud {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid var(--border-glass);
+  color: var(--text-main);
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.btn-hud:hover {
+  background: rgba(51, 65, 85, 0.9);
+  border-color: rgba(148, 163, 184, 0.5);
+}
+
+.btn-hud.icon-only {
+  padding: 5px 9px;
+  font-size: 0.85rem;
+}
+
+.btn-hud.icon-only.active {
+  border-color: var(--color-cyan);
+  color: #38bdf8;
+}
+
+/* =====================================================================
+   2. FULL-SCREEN MAP VIEWPORT
+   ===================================================================== */
+
+.map-container {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: calc(100vh - 56px);
+  overflow: hidden;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  background: #090e17;
+  z-index: 1;
+}
+
+/* Custom Tile Dark Mode filter */
+.dark-tiles .leaflet-tile-pane {
+  filter: brightness(0.7) invert(1) contrast(2.5) hue-rotate(200deg) saturate(0.3);
+}
+
+/* Floating Map Layer Switcher (Top Right) */
+.floating-layer-switcher {
+  position: absolute;
+  top: 12px;
+  right: 56px;
+  z-index: 950;
+  display: flex;
+  gap: 3px;
+  background: var(--bg-glass-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  border-radius: 18px;
+  padding: 3px;
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-layer {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  padding: 5px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-layer.active {
+  background: rgba(56, 189, 248, 0.25);
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+/* =====================================================================
+   3. FLOATING TURN-BY-TURN HUD (Centered in Map Area)
+   ===================================================================== */
+
+.floating-nav-hud {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(660px, calc(100% - 460px));
+  min-width: 480px;
+  background: var(--bg-glass-card);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  padding: 10px 14px;
+  box-shadow: var(--shadow-lg);
+  z-index: 980;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-nav-hud.rerouted {
+  border-color: rgba(239, 68, 68, 0.65);
+  box-shadow: 0 12px 32px rgba(239, 68, 68, 0.25), 0 0 20px rgba(239, 68, 68, 0.3);
+  background: rgba(28, 14, 24, 0.94);
+}
+
+.nav-vehicle-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.floating-nav-hud.rerouted .nav-vehicle-avatar {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  animation: bounce-icon 0.6s ease infinite alternate;
+}
+
+@keyframes bounce-icon {
+  from { transform: translateY(0); }
+  to { transform: translateY(-3px); }
+}
+
+.nav-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.nav-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3px;
+  gap: 10px;
+}
+
+.nav-route-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-status-badge {
+  font-size: 0.66rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nav-status-badge.green {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.nav-status-badge.orange {
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+}
+
+.nav-status-badge.red {
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #f87171;
+  animation: pulse-badge 1s infinite alternate;
+}
+
+@keyframes pulse-badge {
+  from { transform: scale(1); }
+  to { transform: scale(1.03); }
+}
+
+.nav-instruction {
+  font-size: 0.84rem;
+  color: #f1f5f9;
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+
+.nav-instruction strong {
+  color: #ffffff;
+}
+
+.nav-sub-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.nav-sub-bar .sub-item {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(71, 98, 150, 0.25);
+  white-space: nowrap;
+}
+
+.nav-sub-bar .sub-item.highlight {
+  color: #38bdf8;
+  font-weight: 600;
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.nav-corridor-switch {
+  flex-shrink: 0;
+}
+
+.btn-switch {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid var(--border-glass);
+  color: var(--text-main);
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-switch:hover {
+  background: rgba(51, 65, 85, 0.9);
+  border-color: var(--color-cyan);
+}
+
+/* =====================================================================
+   4. FLOATING LEFT CONTROLLER (Judge Scenarios & Vehicle Clearance)
+   ===================================================================== */
+
+.floating-left-controller {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  width: 300px;
+  z-index: 980;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.controller-card {
+  background: var(--bg-glass-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+  transition: border-color 0.2s;
+}
+
+.controller-card:hover {
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.card-title-row h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: 0.02em;
+}
+
+.pill-preset-tag, .pill-info, .node-id-badge {
+  font-size: 0.62rem;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+/* Scenario Pills Grid */
+.preset-pill-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.btn-scenario {
+  border: 1px solid var(--border-glass);
+  background: rgba(26, 38, 64, 0.6);
+  border-radius: 10px;
+  padding: 7px 9px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-main);
+}
+
+.btn-scenario:hover {
+  background: rgba(35, 52, 88, 0.85);
+  transform: translateX(2px);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.btn-scenario.active {
+  background: rgba(14, 165, 233, 0.22);
+  border-color: #0284c7;
+  box-shadow: 0 0 12px rgba(2, 132, 199, 0.35);
+}
+
+.btn-scenario.danger.active {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: #ef4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
+.scen-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.scen-desc {
+  display: flex;
+  flex-direction: column;
+}
+
+.scen-desc strong {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.scen-desc small {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+/* Vehicle Mode Pills */
+.vehicle-btn-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.btn-veh {
+  background: rgba(22, 33, 56, 0.7);
+  border: 1px solid var(--border-glass);
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 6px 2px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-veh:hover {
+  background: rgba(35, 52, 88, 0.9);
+  color: #fff;
+}
+
+.btn-veh.active {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: var(--color-cyan);
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+/* Compact Sensor Surcharge Card */
+.surcharge-progress-wrapper {
+  margin-bottom: 7px;
+}
+
+.surcharge-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.surcharge-label-row strong {
+  color: #f1f5f9;
+  font-family: var(--font-mono);
+}
+
+.progress-bar-bg {
+  height: 7px;
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease, background 0.4s ease;
+}
+
+.progress-bar-fill.green { background: var(--color-green); }
+.progress-bar-fill.orange { background: var(--color-orange); }
+.progress-bar-fill.red { background: var(--color-red); }
+
+.surcharge-threshold-indicator {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.58rem;
+  color: var(--text-dim);
+  margin-top: 3px;
+}
+
+.surcharge-threshold-indicator .thresh-line {
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+/* Metrics Mini Grid */
+.metrics-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  background: rgba(15, 23, 42, 0.65);
+  padding: 6px 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border-glass);
+}
+
+.metric-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.m-label {
+  font-size: 0.56rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.m-val {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  color: #ffffff;
+  margin-top: 2px;
+}
+
+.m-val.safe { color: var(--color-green); }
+.m-val.warn { color: var(--color-orange); }
+.m-val.danger { color: var(--color-red); }
+.m-val.highlight { color: #38bdf8; font-weight: 700; }
+
+/* Sliders Accordion */
+.sim-details {
+  margin-top: 7px;
+  border-top: 1px solid var(--border-glass);
+  padding-top: 5px;
+}
+
+.sim-details summary {
+  font-size: 0.66rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sim-details summary:hover {
+  color: var(--text-muted);
+}
+
+.slider-box {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.slider-row small {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.slider-row input[type="range"] {
+  width: 100%;
+  accent-color: #0284c7;
+  cursor: pointer;
+}
+
+/* =====================================================================
+   5. FLOATING LEGEND (Bottom Right)
+   ===================================================================== */
+
+.floating-legend {
+  position: absolute;
+  bottom: 20px;
+  right: 14px;
+  background: var(--bg-glass-card);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  padding: 8px 12px;
+  box-shadow: var(--shadow-lg);
+  z-index: 950;
+  font-size: 0.68rem;
+}
+
+.legend-header {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.leg-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #cbd5e1;
+}
+
+.leg-pill {
+  width: 18px;
+  height: 4px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.leg-pill.green { background: #10b981; box-shadow: 0 0 6px #10b981; }
+.leg-pill.orange { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+.leg-pill.red { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+.leg-pill.cyan-dashed { 
+  background: repeating-linear-gradient(90deg, #06b6d4, #06b6d4 4px, transparent 4px, transparent 8px); 
+}
+.leg-pill.blue-dotted { 
+  background: repeating-linear-gradient(90deg, #3b82f6, #3b82f6 3px, transparent 3px, transparent 6px); 
+}
+
+/* =====================================================================
+   6. GOOGLE MAPS WARNING OVERLAY BANNER
+   ===================================================================== */
+
+.google-maps-banner {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(700px, calc(100% - 360px));
+  background: rgba(220, 38, 38, 0.94);
+  backdrop-filter: blur(16px);
+  border: 2px solid #ffffff;
+  border-radius: 14px;
+  padding: 10px 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 24px rgba(220, 38, 38, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  animation: slide-up-banner 0.3s ease-out;
+}
+
+@keyframes slide-up-banner {
+  from { transform: translate(-50%, 20px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.gm-icon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.gm-text strong {
+  font-size: 0.82rem;
+  color: #fff;
+  letter-spacing: 0.04em;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.gm-text p {
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: #fee2e2;
+}
+
+/* Audio Toast */
+.audio-toast {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid var(--color-cyan);
+  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+  border-radius: 24px;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  z-index: 1100;
+  animation: toast-fade 0.3s ease;
+}
+
+@keyframes toast-fade {
+  from { opacity: 0; transform: translate(-50%, -10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* =====================================================================
+   7. SLIDE-OUT DRAWER: GCC ICCC COMMAND CONSOLE
+   ===================================================================== */
+
+.iccc-drawer {
+  position: fixed;
+  top: 56px;
+  right: -420px;
+  width: 400px;
+  height: calc(100vh - 56px);
+  background: rgba(10, 17, 30, 0.96);
+  backdrop-filter: blur(20px);
+  border-left: 1px solid var(--border-glass-bright);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6);
+  z-index: 1300;
+  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.iccc-drawer.open {
+  right: 0;
+}
+
+.drawer-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-glass);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dh-title h3 {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.live-pill {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.btn-close-drawer {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.drawer-body {
+  padding: 14px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.drawer-section h4 {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gateways-mini-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.gw-pill {
+  background: rgba(22, 33, 56, 0.6);
+  border: 1px solid var(--border-glass);
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 0.68rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.gw-pill strong { color: #38bdf8; font-size: 0.68rem; }
+.gw-pill span { color: #10b981; font-size: 0.64rem; }
+
+.hotspots-scroll-list {
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hotspot-card {
+  background: rgba(22, 33, 56, 0.6);
+  border: 1px solid var(--border-glass);
+  padding: 6px 8px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hotspot-card:hover {
+  background: rgba(35, 52, 88, 0.8);
+  border-color: #38bdf8;
+}
+
+.hotspot-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.hotspot-status-dot.green { background: var(--color-green); }
+.hotspot-status-dot.orange { background: var(--color-orange); }
+.hotspot-status-dot.red { background: var(--color-red); }
+
+.terminal-log-box {
+  background: #050a12;
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  padding: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  height: 120px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.log-entry.system { color: #38bdf8; }
+.log-entry.info { color: #94a3b8; }
+.log-entry.normal { color: #34d399; }
+.log-entry.warning { color: #fbbf24; }
+.log-entry.danger { color: #f87171; font-weight: bold; }
+
+.civic-btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.btn-civic {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid var(--border-glass);
+  color: var(--text-main);
+  padding: 7px 6px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-civic:hover { background: rgba(51, 65, 85, 0.9); }
+.btn-civic.danger { border-color: rgba(239, 68, 68, 0.5); color: #fca5a5; }
+.btn-civic.danger:hover { background: rgba(239, 68, 68, 0.25); }
+
+/* =====================================================================
+   8. ROUTE GLOW EFFECTS & UTILITIES
+   ===================================================================== */
+
+.route-glow-green {
+  filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.8));
+}
+
+.route-glow-orange {
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.8));
+}
+
+.route-glow-red {
+  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.9));
+}
+
+.route-glow-cyan {
+  filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.9));
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(10, 15, 26, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(71, 98, 150, 0.4);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.6);
+}

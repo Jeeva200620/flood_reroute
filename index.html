@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chennai Jal-Marg | AI Urban Flood Nowcasting & Dynamic Rerouting (GCC & MoES)</title>
+  <meta name="description" content="AI Urban Flood Nowcasting, Stormwater Drain Surcharge Coupling, and Dynamic Traffic Rerouting for Greater Chennai Corporation.">
+  
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-dark">
+
+  <!-- =====================================================================
+       1. TOP COMPACT FLOATING BAR (HUD) - BALANCED & RESPONSIVE
+       ===================================================================== -->
+  <header class="top-nav-bar">
+    <div class="brand-group">
+      <div class="radar-ping">
+        <span class="ping-circle"></span>
+        <span class="ping-core"></span>
+      </div>
+      <div class="brand-text">
+        <div class="brand-row">
+          <span class="brand-title">CHENNAI JAL-MARG</span>
+          <span class="badge-sih">GCC • MoES</span>
+        </div>
+        <span class="brand-sub">Urban Drainage Surcharge & Dynamic Navigation</span>
+      </div>
+    </div>
+
+    <!-- Live Telemetry Badges (Concise & Never Overflowing) -->
+    <div class="hud-telemetry">
+      <div class="tele-chip" id="chip-radar">
+        <span class="chip-dot live"></span>
+        <span class="chip-title">RADAR:</span>
+        <strong id="disp-radar" class="chip-val">0 mm/hr</strong>
+      </div>
+      <div class="tele-chip" id="chip-drain">
+        <span class="chip-dot green" id="chip-drain-dot"></span>
+        <span class="chip-title">DRAIN:</span>
+        <strong id="disp-drain-surcharge" class="chip-val">24% (120L)</strong>
+      </div>
+      <div class="tele-chip" id="chip-reservoir">
+        <span class="chip-dot cyan"></span>
+        <span class="chip-title">RESERVOIRS:</span>
+        <strong id="disp-reservoir" class="chip-val">39.4% (5,210 MCFT)</strong>
+      </div>
+    </div>
+
+    <!-- Mode & Action Buttons -->
+    <div class="hud-actions">
+      <!-- Mode Toggle: Google Maps vs Jal-Marg -->
+      <div class="mode-toggle-group" title="Demonstrate Google Maps flaw vs Jal-Marg hydrological reroute">
+        <button id="btn-mode-jalmarg" class="btn-mode active">
+          🌊 Jal-Marg AI
+        </button>
+        <button id="btn-mode-google" class="btn-mode">
+          🛑 Google Maps
+        </button>
+      </div>
+
+      <!-- ICCC Command Center Drawer Button -->
+      <button id="btn-toggle-iccc" class="btn-hud" title="Open GCC ICCC Command Center">
+        🏢 ICCC Console
+      </button>
+
+      <!-- Voice Alerts Toggle -->
+      <button id="voice-toggle" class="btn-hud icon-only active" title="Toggle Voice Alerts">
+        <span id="voice-icon">🔊</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       2. FULL-SCREEN MAP VIEWPORT
+       ===================================================================== -->
+  <main class="map-container">
+    <div id="map"></div>
+
+    <!-- FLOATING MAP LAYER SWITCHER (Top Right beside Zoom Controls) -->
+    <div class="floating-layer-switcher">
+      <button id="layer-osm" class="btn-layer active" title="OpenStreetMap Street Layer">🗺️ Streets</button>
+      <button id="layer-esri-sat" class="btn-layer" title="Esri High-Res Satellite View">🛰️ Satellite</button>
+      <button id="layer-dark" class="btn-layer" title="Esri Dark Night Radar">🌃 Dark</button>
+    </div>
+
+    <!-- FLOATING GPS TURN-BY-TURN NAVIGATION BANNER (Centered in Map Area) -->
+    <div class="floating-nav-hud" id="nav-banner">
+      <div class="nav-vehicle-avatar" id="nav-avatar-icon">🚗</div>
+      <div class="nav-content">
+        <div class="nav-header-row">
+          <div class="nav-route-title" id="nav-route-name">SOUTH CHENNAI: NANGANALLUR ➔ GUINDY (KATHIPARA)</div>
+          <div class="nav-status-badge green" id="nav-status-pill">DIRECT ROUTE • SUBWAY DRY</div>
+        </div>
+        <div class="nav-instruction" id="nav-instruction-text">
+          Proceed straight through <strong>Thillai Ganga Nagar Subway</strong>. Drainage clear (&lt; 5 cm).
+        </div>
+        <div class="nav-sub-bar">
+          <span class="sub-item" id="nav-eta">⏱️ ETA: 8 mins</span>
+          <span class="sub-item" id="nav-water-depth">💧 Water: 0 cm</span>
+          <span class="sub-item highlight" id="nav-lead-time">⏳ Lead Time: Safe</span>
+        </div>
+      </div>
+      <div class="nav-corridor-switch">
+        <button id="switch-corridor" class="btn-switch" title="Switch Corridor between South and North Chennai">
+          <span class="switch-icon">⇄</span>
+          <span id="corridor-name">South Chennai</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- FLOATING LEFT PANEL: JUDGE 3-STEP CONTROLLER & VEHICLE PROFILES -->
+    <aside class="floating-left-controller">
+      <!-- 1. The SIH Judge Presets (Clean & Compact) -->
+      <div class="controller-card">
+        <div class="card-title-row">
+          <h4>⚡ 1-Click Scenarios</h4>
+          <span class="pill-preset-tag">Demo Presets</span>
+        </div>
+        <div class="preset-pill-grid">
+          <button id="preset-clear" class="btn-scenario active">
+            <span class="scen-icon">☀️</span>
+            <div class="scen-desc">
+              <strong>1. Dry Weather</strong>
+              <small>0 mm/hr • Subway Open</small>
+            </div>
+          </button>
+          <button id="preset-rain2h" class="btn-scenario">
+            <span class="scen-icon">🌦️</span>
+            <div class="scen-desc">
+              <strong>2. 1–2h Rain (Caution)</strong>
+              <small>45 mm/hr • Drains @ 76%</small>
+            </div>
+          </button>
+          <button id="preset-deluge" class="btn-scenario danger">
+            <span class="scen-icon">⛈️</span>
+            <div class="scen-desc">
+              <strong>3. Severe Deluge</strong>
+              <small>110 mm/hr • Flyover Reroute</small>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. Vehicle Clearance Matrix -->
+      <div class="controller-card">
+        <div class="card-title-row">
+          <h4>🚗 Vehicle Clearance Mode</h4>
+          <span class="pill-info" title="Routing adapts automatically based on exhaust/air-intake threshold">Adaptive</span>
+        </div>
+        <div class="vehicle-btn-group">
+          <button class="btn-veh" data-vehicle="bike" title="Cut-off at 15cm depth">
+            🛵 2-Wheeler
+          </button>
+          <button class="btn-veh active" data-vehicle="car" title="Cut-off at 25cm depth">
+            🚗 Car
+          </button>
+          <button class="btn-veh" data-vehicle="ambulance" title="High-clearance up to 60cm depth">
+            🚑 Ambulance
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. IoT Micro-Sump 500L Sensor Bar & Nowcast Lead Time -->
+      <div class="controller-card compact-sensor-card">
+        <div class="card-title-row">
+          <h4>📡 SWD Surcharge & Lead Time</h4>
+          <span class="node-id-badge">Manhole #42</span>
+        </div>
+
+        <!-- Surcharge Progress Bar -->
+        <div class="surcharge-progress-wrapper">
+          <div class="surcharge-label-row">
+            <span>Sump Fill Level:</span>
+            <strong id="gauge-fill-text">120 L / 500 L (24%)</strong>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="surcharge-fill-bar" class="progress-bar-fill green" style="width: 24%;"></div>
+          </div>
+          <div class="surcharge-threshold-indicator">
+            <span>0L</span>
+            <span class="thresh-line">▲ 450L (90% Surcharge Threshold)</span>
+            <span>500L</span>
+          </div>
+        </div>
+
+        <!-- Live Metrics Grid -->
+        <div class="metrics-mini-grid">
+          <div class="metric-box">
+            <span class="m-label">Water Depth</span>
+            <strong class="m-val" id="sensor-water-depth">0 cm</strong>
+          </div>
+          <div class="metric-box">
+            <span class="m-label">Drain Status</span>
+            <strong class="m-val safe" id="drain-status-text">NORMAL FLOW</strong>
+          </div>
+          <div class="metric-box">
+            <span class="m-label">Submerge In</span>
+            <strong class="m-val highlight" id="countdown-submerge">SAFE (&gt;3h)</strong>
+          </div>
+        </div>
+
+        <!-- Weather Sliders (Collapsible Accordion) -->
+        <details class="sim-details">
+          <summary>⚙️ Manual Radar & Duration Sliders</summary>
+          <div class="slider-box">
+            <div class="slider-row">
+              <small>IMD Rainfall: <strong id="rain-rate-disp">0 mm/hr</strong></small>
+              <input type="range" id="rain-slider" min="0" max="130" value="0" step="5">
+            </div>
+            <div class="slider-row">
+              <small>Duration: <strong id="rain-hours-disp">0 Hours</strong></small>
+              <input type="range" id="hours-slider" min="0" max="48" value="0" step="1">
+            </div>
+          </div>
+        </details>
+      </div>
+
+    </aside>
+
+    <!-- FLOATING MAP LEGEND (Bottom Right) -->
+    <div class="floating-legend">
+      <div class="legend-header">
+        <span>🚦 Legend & Inundation State</span>
+      </div>
+      <div class="legend-items">
+        <div class="leg-row"><span class="leg-pill green"></span> <strong>Green:</strong> Subway Dry (&lt;10cm, Direct Route)</div>
+        <div class="leg-row"><span class="leg-pill orange"></span> <strong>Orange:</strong> Warning (10–25cm, Slow Traffic)</div>
+        <div class="leg-row"><span class="leg-pill red"></span> <strong>Red:</strong> Submerged (&gt;25cm, Reroute Triggered)</div>
+        <div class="leg-row"><span class="leg-pill cyan-dashed"></span> <strong>Cyan Dashed:</strong> Safe High-Ground Flyover Bypass</div>
+        <div class="leg-row"><span class="leg-pill blue-dotted"></span> <strong>Blue Dotted:</strong> Buckingham Canal & Sea Gateways</div>
+      </div>
+    </div>
+
+    <!-- AUDIO / TOAST NOTIFICATION -->
+    <div id="audio-toast" class="audio-toast hidden">
+      <span class="toast-speaker">📢</span>
+      <span id="toast-msg">Rerouting: Subway water level critical!</span>
+    </div>
+
+    <!-- GOOGLE MAPS WARNING OVERLAY BANNER (When Google Maps mode is active) -->
+    <div id="google-maps-banner" class="google-maps-banner hidden">
+      <div class="gm-icon">⚠️</div>
+      <div class="gm-text">
+        <strong>THE GOOGLE MAPS FATAL BLINDSPOT DEMO:</strong>
+        <p>Google Maps relies purely on smartphone GPS speeds. It shows this subway in <strong>Green/Yellow</strong> (light traffic) unaware that <strong>40 cm of water</strong> is trapped inside! Drivers enter blindly and stall their engines. <em>Switch back to <strong>Jal-Marg AI</strong> to see proactive hydrological rerouting.</em></p>
+      </div>
+    </div>
+  </main>
+
+  <!-- =====================================================================
+       3. SLIDE-OUT DRAWER: GCC ICCC COMMAND CONSOLE
+       ===================================================================== -->
+  <div class="iccc-drawer" id="iccc-drawer">
+    <div class="drawer-header">
+      <div class="dh-title">
+        <h3>🏢 GCC ICCC Command Center</h3>
+        <span class="live-pill">LIVE TERMINAL</span>
+      </div>
+      <button id="btn-close-iccc" class="btn-close-drawer">&times;</button>
+    </div>
+
+    <div class="drawer-body">
+      <!-- 4 Natural Sea Gateways Outflow Status -->
+      <div class="drawer-section">
+        <h4>🌊 4 Natural Sea Gateways (Bay of Bengal Outlets)</h4>
+        <div class="gateways-mini-list">
+          <div class="gw-pill" id="gate-ennore">
+            <strong>1. Ennore Creek (North)</strong>
+            <span id="flow-ennore">Normal Outflow</span>
+          </div>
+          <div class="gw-pill" id="gate-cooum">
+            <strong>2. Napier Bridge / Cooum (Central)</strong>
+            <span id="flow-cooum">Normal Outflow</span>
+          </div>
+          <div class="gw-pill" id="gate-adyar">
+            <strong>3. Adyar Estuary (South)</strong>
+            <span id="flow-adyar">Normal Outflow</span>
+          </div>
+          <div class="gw-pill" id="gate-kovalam">
+            <strong>4. Kovalam / Muttukadu (Far South)</strong>
+            <span id="flow-kovalam">Normal Outflow</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Monitored Flood Hotspots -->
+      <div class="drawer-section">
+        <h4>📍 Monitored Flood Hotspots (219 GCC Points)</h4>
+        <div class="hotspots-scroll-list" id="hotspots-list">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- ICCC Command Terminal Log -->
+      <div class="drawer-section">
+        <h4>💻 Telemetry & Automated Dispatch Log</h4>
+        <div class="terminal-log-box" id="terminal-logs">
+          <div class="log-entry system">[SYSTEM] GCC ICCC Ripon Building engine connected.</div>
+          <div class="log-entry info">[DATA] 24 Subways & 100 SWD Ultrasonic radar sensors online.</div>
+          <div class="log-entry normal">[ROUTING] Direct subway corridors open.</div>
+        </div>
+      </div>
+
+      <!-- Civic Actions -->
+      <div class="drawer-section">
+        <h4>🚨 Civic Emergency Dispatch Override</h4>
+        <div class="civic-btn-grid">
+          <button id="btn-dispatch-pump" class="btn-civic">🚜 Deploy 100HP Pump</button>
+          <button id="btn-close-subway" class="btn-civic danger">⛔ Lower Subway Barrier</button>
+          <button id="btn-sms-alert" class="btn-civic">📱 Broadcast Public SMS</button>
+          <button id="btn-clear-actions" class="btn-civic secondary">🔄 Reset Protocols</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- Main Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
