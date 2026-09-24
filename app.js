@@ -761,47 +761,64 @@ document.addEventListener('DOMContentLoaded', () => {
     addLog('info', `Rainfall duration accumulator updated to ${state.rainDuration} hours.`);
   });
 
-  // Presets
+  // Presets & Unified Scenario Controller
   const btnClear = document.getElementById('preset-clear');
   const btnRain2h = document.getElementById('preset-rain2h');
   const btnDeluge = document.getElementById('preset-deluge');
 
   function clearActivePresets() {
-    [btnClear, btnRain2h, btnDeluge].forEach(b => b.classList.remove('active'));
+    [btnClear, btnRain2h, btnDeluge].forEach(b => { if (b) b.classList.remove('active'); });
   }
 
-  btnClear.addEventListener('click', () => {
+  function applyScenario(preset) {
     clearActivePresets();
-    btnClear.classList.add('active');
-    state.rainIntensity = 0;
-    state.rainDuration = 0;
-    rainSlider.value = 0;
-    hoursSlider.value = 0;
-    calculateHydrology();
-    addLog('normal', 'SCENARIO 1: Dry conditions. Subways clear. Direct navigation route open.');
-  });
+    const twinBtnClear = document.getElementById('twin-btn-clear');
+    const twinBtnRain = document.getElementById('twin-btn-rain');
+    const twinBtnDeluge = document.getElementById('twin-btn-deluge');
+    const twinRainSlider = document.getElementById('twin-rain-slider');
+    const twinRainVal = document.getElementById('twin-rain-val');
 
-  btnRain2h.addEventListener('click', () => {
-    clearActivePresets();
-    btnRain2h.classList.add('active');
-    state.rainIntensity = 45;
-    state.rainDuration = 2;
-    rainSlider.value = 45;
-    hoursSlider.value = 2;
-    calculateHydrology();
-    addLog('warning', 'SCENARIO 2: 2h Continuous rain (45 mm/hr). Drain surcharge @ 76%. Advisory issued.');
-  });
+    [twinBtnClear, twinBtnRain, twinBtnDeluge].forEach(b => { if (b) b.classList.remove('active'); });
 
-  btnDeluge.addEventListener('click', () => {
-    clearActivePresets();
-    btnDeluge.classList.add('active');
-    state.rainIntensity = 110;
-    state.rainDuration = 48;
-    rainSlider.value = 110;
-    hoursSlider.value = 48;
-    calculateHydrology();
-    addLog('danger', 'SCENARIO 3: 2-Day Deluge (110 mm/hr). Drain at 95% surcharge. Automated boom barrier deployed & dynamic flyover detour activated.');
-  });
+    if (preset === 'clear') {
+      if (btnClear) btnClear.classList.add('active');
+      if (twinBtnClear) twinBtnClear.classList.add('active');
+      state.rainIntensity = 0;
+      state.rainDuration = 0;
+      if (rainSlider) rainSlider.value = 0;
+      if (hoursSlider) hoursSlider.value = 0;
+      if (twinRainSlider) twinRainSlider.value = 0;
+      if (twinRainVal) twinRainVal.textContent = '0 mm/hr';
+      calculateHydrology();
+      addLog('normal', 'SCENARIO 1: Dry conditions. Subways clear. Direct navigation route open.');
+    } else if (preset === 'rain2h') {
+      if (btnRain2h) btnRain2h.classList.add('active');
+      if (twinBtnRain) twinBtnRain.classList.add('active');
+      state.rainIntensity = 45;
+      state.rainDuration = 2;
+      if (rainSlider) rainSlider.value = 45;
+      if (hoursSlider) hoursSlider.value = 2;
+      if (twinRainSlider) twinRainSlider.value = 45;
+      if (twinRainVal) twinRainVal.textContent = '45 mm/hr';
+      calculateHydrology();
+      addLog('warning', 'SCENARIO 2: 2h Continuous rain (45 mm/hr). Drain surcharge @ 76%. Advisory issued.');
+    } else if (preset === 'deluge') {
+      if (btnDeluge) btnDeluge.classList.add('active');
+      if (twinBtnDeluge) twinBtnDeluge.classList.add('active');
+      state.rainIntensity = 110;
+      state.rainDuration = 48;
+      if (rainSlider) rainSlider.value = 110;
+      if (hoursSlider) hoursSlider.value = 48;
+      if (twinRainSlider) twinRainSlider.value = 110;
+      if (twinRainVal) twinRainVal.textContent = '110 mm/hr';
+      calculateHydrology();
+      addLog('danger', 'SCENARIO 3: 2-Day Deluge (110 mm/hr). Drain at 95% surcharge. Automated boom barrier deployed & dynamic flyover detour activated.');
+    }
+  }
+
+  if (btnClear) btnClear.addEventListener('click', () => applyScenario('clear'));
+  if (btnRain2h) btnRain2h.addEventListener('click', () => applyScenario('rain2h'));
+  if (btnDeluge) btnDeluge.addEventListener('click', () => applyScenario('deluge'));
 
   // Vehicle Profile Selector
   const vehBtns = document.querySelectorAll('.btn-veh');
@@ -979,11 +996,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // SCENE, CAMERA, RENDERER
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a101d); // Deep moody atmospheric backdrop
-    scene.fog = new THREE.FogExp2(0x0a101d, 0.018);
+    scene.background = new THREE.Color(0x0a0f1d);
+    scene.fog = new THREE.FogExp2(0x0a0f1d, 0.012);
 
-    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.set(24, 18, 28);
+    const camera = new THREE.PerspectiveCamera(42, container.clientWidth / container.clientHeight, 0.1, 1000);
+    // Unobstructed 3/4 Isometric Perspective - frames cutting, floodwater, barrier, train and flyover
+    camera.position.set(-20, 14, 25);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -991,7 +1009,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.25;
     container.appendChild(renderer.domElement);
 
     // ORBIT CONTROLS
@@ -999,481 +1017,722 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof THREE.OrbitControls !== 'undefined') {
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
+      controls.dampingFactor = 0.06;
       controls.maxPolarAngle = Math.PI / 2.05;
-      controls.minDistance = 6;
-      controls.maxDistance = 85;
-      controls.target.set(0, 0, 0);
+      controls.minDistance = 8;
+      controls.maxDistance = 75;
+      controls.target.set(1.0, -0.6, 2);
+      controls.update();
     }
 
-    // LIGHTS
-    const ambientLight = new THREE.AmbientLight(0x94a3b8, 0.85);
+    // LIGHTING SETUP
+    const ambientLight = new THREE.AmbientLight(0x94a3b8, 1.1);
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight(0xfff7ed, 1.4);
-    sunLight.position.set(22, 45, 25);
+    const sunLight = new THREE.DirectionalLight(0xfff7ed, 1.5);
+    sunLight.position.set(25, 40, 25);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 1024;
     sunLight.shadow.mapSize.height = 1024;
+    sunLight.shadow.bias = -0.0005;
     scene.add(sunLight);
 
-    // Subway Underpass Floodlights (Illuminating the flooded road)
-    const subwayLight1 = new THREE.PointLight(0xfef08a, 1.6, 25);
-    subwayLight1.position.set(-3, 3.2, 0);
+    const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.5);
+    fillLight.position.set(-20, 25, -20);
+    scene.add(fillLight);
+
+    // Subway Underpass Floodlights (Illuminating the flooded road beneath the bridge)
+    const subwayLight1 = new THREE.PointLight(0xfef08a, 2.0, 22);
+    subwayLight1.position.set(-2.5, 2.8, 0);
     scene.add(subwayLight1);
 
-    const subwayLight2 = new THREE.PointLight(0xfef08a, 1.6, 25);
-    subwayLight2.position.set(3, 3.2, 0);
+    const subwayLight2 = new THREE.PointLight(0xfef08a, 2.0, 22);
+    subwayLight2.position.set(2.5, 2.8, 0);
     scene.add(subwayLight2);
 
-    // Warning Strobe Beacons on Portal
-    const warningBeaconL = new THREE.PointLight(0x10b981, 2, 15);
-    warningBeaconL.position.set(-5.5, 3.8, 4.2);
+    // Portal Warning Beacons on entrance portal
+    const warningBeaconL = new THREE.PointLight(0x10b981, 2.2, 14);
+    warningBeaconL.position.set(-5.6, 2.2, 13);
     scene.add(warningBeaconL);
 
-    const warningBeaconR = new THREE.PointLight(0x10b981, 2, 15);
-    warningBeaconR.position.set(5.5, 3.8, 4.2);
+    const warningBeaconR = new THREE.PointLight(0x10b981, 2.2, 14);
+    warningBeaconR.position.set(5.6, 2.2, 13);
     scene.add(warningBeaconR);
 
     // -------------------------------------------------------------
-    // 3D GEOMETRY CONSTRUCTION
+    // 3D GEOMETRY CONSTRUCTION (OPEN CUTTING - ROAD IS 100% VISIBLE)
     // -------------------------------------------------------------
 
-    // 1. Terrain Ground Base (Surrounding Ground Level at Y = 1.0)
-    const groundGeo = new THREE.PlaneGeometry(120, 120);
-    const groundMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.9 });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = 1.0;
-    ground.receiveShadow = true;
-    scene.add(ground);
+    // 1. Terrain Ground Banks (Separated to leave a wide open cutting for the road)
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9 });
 
-    // 2. Depressed Subway Roadway
-    const floorGeo = new THREE.BoxGeometry(11, 0.5, 30);
-    const floorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7 });
-    const subwayFloor = new THREE.Mesh(floorGeo, floorMat);
-    subwayFloor.position.set(0, -1.8, 0);
-    subwayFloor.receiveShadow = true;
-    scene.add(subwayFloor);
+    // Left Ground Bank
+    const groundLeft = new THREE.Mesh(new THREE.PlaneGeometry(55, 90), groundMat);
+    groundLeft.rotation.x = -Math.PI / 2;
+    groundLeft.position.set(-33.2, 0.5, 0);
+    groundLeft.receiveShadow = true;
+    scene.add(groundLeft);
 
-    // South Incline Ramp
-    const rampSouthGeo = new THREE.BoxGeometry(11, 0.5, 26);
-    const rampSouth = new THREE.Mesh(rampSouthGeo, floorMat);
-    rampSouth.position.set(0, -0.4, 27);
-    rampSouth.rotation.x = -0.11;
+    // Right Ground Bank
+    const groundRight = new THREE.Mesh(new THREE.PlaneGeometry(55, 90), groundMat);
+    groundRight.rotation.x = -Math.PI / 2;
+    groundRight.position.set(33.2, 0.5, 0);
+    groundRight.receiveShadow = true;
+    scene.add(groundRight);
+
+    // 2. Depressed Subway Roadway (Asphalt Surface inside cutting)
+    const asphaltMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.7 });
+
+    // Level bottom section of underpass (deepest part where water ponds)
+    const roadFloor = new THREE.Mesh(new THREE.PlaneGeometry(10.6, 22), asphaltMat);
+    roadFloor.rotation.x = -Math.PI / 2;
+    roadFloor.position.set(0, -1.6, 0);
+    roadFloor.receiveShadow = true;
+    scene.add(roadFloor);
+
+    // South Incline Ramp (slopes from y = 0.5 at z = 24 down to y = -1.6 at z = 11)
+    const rampSouth = new THREE.Mesh(new THREE.BoxGeometry(10.6, 0.4, 15.5), asphaltMat);
+    rampSouth.position.set(0, -0.55, 18.2);
+    rampSouth.rotation.x = -0.145;
     rampSouth.receiveShadow = true;
     scene.add(rampSouth);
 
-    // North Incline Ramp
-    const rampNorthGeo = new THREE.BoxGeometry(11, 0.5, 26);
-    const rampNorth = new THREE.Mesh(rampNorthGeo, floorMat);
-    rampNorth.position.set(0, -0.4, -27);
-    rampNorth.rotation.x = 0.11;
+    // North Incline Ramp (slopes from y = -1.6 at z = -11 up to y = 0.5 at z = -24)
+    const rampNorth = new THREE.Mesh(new THREE.BoxGeometry(10.6, 0.4, 15.5), asphaltMat);
+    rampNorth.position.set(0, -0.55, -18.2);
+    rampNorth.rotation.x = 0.145;
     rampNorth.receiveShadow = true;
     scene.add(rampNorth);
 
-    // Road Markings (Yellow center line)
-    const dividerGeo = new THREE.PlaneGeometry(0.35, 28);
-    const dividerMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
-    const divider = new THREE.Mesh(dividerGeo, dividerMat);
-    divider.rotation.x = -Math.PI / 2;
-    divider.position.set(0, -1.54, 0);
-    scene.add(divider);
+    // Road Markings (Yellow center divider line)
+    const lineMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+    const centerLine = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 21.5), lineMat);
+    centerLine.rotation.x = -Math.PI / 2;
+    centerLine.position.set(0, -1.59, 0);
+    scene.add(centerLine);
 
-    // 3. Concrete Retaining Walls
-    const wallGeo = new THREE.BoxGeometry(1, 4.0, 32);
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.8 });
+    // 3. Concrete Retaining Walls (Flanking the underpass)
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
 
-    const wallLeft = new THREE.Mesh(wallGeo, wallMat);
-    wallLeft.position.set(-5.6, 0.2, 0);
+    const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2.8, 48), wallMat);
+    wallLeft.position.set(-5.7, -0.2, 0);
     wallLeft.castShadow = true;
     wallLeft.receiveShadow = true;
     scene.add(wallLeft);
 
-    const wallRight = new THREE.Mesh(wallGeo, wallMat);
-    wallRight.position.set(5.6, 0.2, 0);
+    const wallRight = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2.8, 48), wallMat);
+    wallRight.position.set(5.7, -0.2, 0);
     wallRight.castShadow = true;
     wallRight.receiveShadow = true;
     scene.add(wallRight);
 
-    // 4. Overhead Railway Embankment & Steel Bridge
+    // 4. Elevated Flyover Bypass Viaduct (Kathipara Grade Separator Reroute)
+    // Elevated above ground on the right side - demonstrates the safe high-ground alternative!
+    const flyoverGroup = new THREE.Group();
+    const flyoverDeckMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.6 });
+
+    const flyoverDeck = new THREE.Mesh(new THREE.BoxGeometry(7.0, 0.6, 52), flyoverDeckMat);
+    flyoverDeck.position.set(13.5, 3.8, 0);
+    flyoverDeck.castShadow = true;
+    flyoverGroup.add(flyoverDeck);
+
+    // Flyover center divider
+    const flyoverLine = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 50), lineMat);
+    flyoverLine.rotation.x = -Math.PI / 2;
+    flyoverLine.position.set(13.5, 4.11, 0);
+    flyoverGroup.add(flyoverLine);
+
+    // Flyover guardrails
+    const railMatAmber = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.4 });
+    const fRailL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 52), railMatAmber);
+    fRailL.position.set(10.2, 4.3, 0);
+    flyoverGroup.add(fRailL);
+
+    const fRailR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 52), railMatAmber);
+    fRailR.position.set(16.8, 4.3, 0);
+    flyoverGroup.add(fRailR);
+
+    // Cylindrical concrete piers supporting the flyover
+    const pierMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.9 });
+    [-18, -6, 6, 18].forEach(pz => {
+      const pier = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.9, 3.6, 16), pierMat);
+      pier.position.set(13.5, 1.8, pz);
+      pier.castShadow = true;
+      flyoverGroup.add(pier);
+    });
+
+    scene.add(flyoverGroup);
+
+    // 5. Automated Safety Boom Barrier at Subway Entrance (z = 13.5)
+    const barrierGroup = new THREE.Group();
+    const barrierPost = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.22, 0.22, 1.8, 12),
+      new THREE.MeshStandardMaterial({ color: 0xd97706 })
+    );
+    barrierPost.position.set(5.1, 0.2, 13.5);
+    barrierGroup.add(barrierPost);
+
+    const barrierArmPivot = new THREE.Group();
+    barrierArmPivot.position.set(5.0, 0.9, 13.5);
+
+    const barrierArm = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.22, 9.6),
+      new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3 })
+    );
+    barrierArm.position.set(-4.8, 0, 0);
+    barrierArm.rotation.y = Math.PI / 2;
+    barrierArmPivot.add(barrierArm);
+    barrierGroup.add(barrierArmPivot);
+    scene.add(barrierGroup);
+
+    // 6. Overhead Railway Bridge (Slender 3.8m deck with open steel truss railings)
     const bridgeGroup = new THREE.Group();
 
-    // Heavy concrete bridge deck
-    const deckGeo = new THREE.BoxGeometry(20, 1.2, 8);
-    const deckMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.6 });
-    const bridgeDeck = new THREE.Mesh(deckGeo, deckMat);
-    bridgeDeck.position.set(0, 3.4, 0);
+    const bridgeDeck = new THREE.Mesh(
+      new THREE.BoxGeometry(26, 0.4, 3.8),
+      new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.6 })
+    );
+    bridgeDeck.position.set(0, 3.5, 0);
     bridgeDeck.castShadow = true;
     bridgeGroup.add(bridgeDeck);
 
-    // Steel Girders
-    const girderMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.4 });
-    const girder1 = new THREE.Mesh(new THREE.BoxGeometry(13, 0.6, 0.5), girderMat);
-    girder1.position.set(0, 2.6, -3.6);
-    bridgeGroup.add(girder1);
-
-    const girder2 = new THREE.Mesh(new THREE.BoxGeometry(13, 0.6, 0.5), girderMat);
-    girder2.position.set(0, 2.6, 3.6);
-    bridgeGroup.add(girder2);
+    // Open Steel Truss Safety Railings
+    const trussMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.7, roughness: 0.3 });
+    [-1.85, 1.85].forEach(zPos => {
+      const g = new THREE.Mesh(new THREE.BoxGeometry(25, 0.3, 0.15), trussMat);
+      g.position.set(0, 4.4, zPos);
+      bridgeGroup.add(g);
+      for (let x = -11; x <= 11; x += 2.5) {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.0, 8), trussMat);
+        post.position.set(x, 4.0, zPos);
+        bridgeGroup.add(post);
+      }
+    });
 
     // Dual Railway Tracks
-    const railMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.2 });
-    [-2.2, -1.2, 1.2, 2.2].forEach(offsetZ => {
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(30, 0.15, 0.15), railMat);
-      rail.position.set(0, 4.15, offsetZ);
+    const steelRailMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.2 });
+    [-1.1, -0.4, 0.4, 1.1].forEach(rz => {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(32, 0.1, 0.1), steelRailMat);
+      rail.position.set(0, 3.75, rz);
       bridgeGroup.add(rail);
     });
 
     // Railway wooden ties
     const tieMat = new THREE.MeshStandardMaterial({ color: 0x3f2e21, roughness: 0.9 });
-    for (let x = -14; x <= 14; x += 1.2) {
-      const tie1 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 1.8), tieMat);
-      tie1.position.set(x, 4.05, -1.7);
+    for (let x = -15; x <= 15; x += 1.0) {
+      const tie1 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.08, 1.2), tieMat);
+      tie1.position.set(x, 3.7, -0.75);
       bridgeGroup.add(tie1);
 
-      const tie2 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 1.8), tieMat);
-      tie2.position.set(x, 4.05, 1.7);
+      const tie2 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.08, 1.2), tieMat);
+      tie2.position.set(x, 3.7, 0.75);
       bridgeGroup.add(tie2);
     }
 
-    // Clearance Height Sign
-    const bannerGeo = new THREE.BoxGeometry(11, 0.8, 0.2);
-    const bannerMat = new THREE.MeshBasicMaterial({ color: 0xd97706 });
-    const banner = new THREE.Mesh(bannerGeo, bannerMat);
-    banner.position.set(0, 3.4, 4.15);
-    bridgeGroup.add(banner);
+    // Indian Railways Clearance Warning Signboard
+    const signBoard = new THREE.Mesh(
+      new THREE.BoxGeometry(10.5, 0.6, 0.1),
+      new THREE.MeshBasicMaterial({ color: 0xd97706 })
+    );
+    signBoard.position.set(0, 3.25, 1.95);
+    bridgeGroup.add(signBoard);
 
     scene.add(bridgeGroup);
 
-    // 5. Underground Stormwater Drain (SWD) Sump Cutaway
+    // 7. Animated Indian Railways Train (WAP-7 Electric Loco + Coaches)
+    const trainGroup = new THREE.Group();
+
+    // Electric Locomotive
+    const loco = new THREE.Mesh(
+      new THREE.BoxGeometry(6.5, 2.2, 1.7),
+      new THREE.MeshStandardMaterial({ color: 0x1d4ed8, metalness: 0.5, roughness: 0.3 })
+    );
+    loco.position.set(6.5, 4.9, 0.75);
+    trainGroup.add(loco);
+
+    // Locomotive Headlight Beam
+    const locoHeadlight = new THREE.PointLight(0xffedd5, 2.5, 20);
+    locoHeadlight.position.set(10.0, 5.0, 0.75);
+    trainGroup.add(locoHeadlight);
+
+    // Passenger Coaches
+    [-0.8, -8.2].forEach(cx => {
+      const coach = new THREE.Mesh(
+        new THREE.BoxGeometry(7.0, 2.1, 1.7),
+        new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.4, roughness: 0.4 })
+      );
+      coach.position.set(cx, 4.85, 0.75);
+      trainGroup.add(coach);
+    });
+
+    trainGroup.position.set(-35, 0, 0);
+    scene.add(trainGroup);
+
+    // 8. Underground Stormwater Drain (SWD) Micro-Sump Cutaway (500L IoT coupling)
     const sumpGroup = new THREE.Group();
 
-    // Sump Chamber Pit (transparent front)
-    const sumpBoxGeo = new THREE.BoxGeometry(6, 2.6, 6);
-    const sumpMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
-      transparent: true,
-      opacity: 0.65,
-      roughness: 0.5
-    });
-    const sumpBox = new THREE.Mesh(sumpBoxGeo, sumpMat);
-    sumpBox.position.set(0, -3.4, 0);
+    // Transparent acrylic sump tank
+    const sumpBox = new THREE.Mesh(
+      new THREE.BoxGeometry(5.5, 2.5, 5.5),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, transparent: true, opacity: 0.6, roughness: 0.5 })
+    );
+    sumpBox.position.set(0, -3.2, 0);
     sumpGroup.add(sumpBox);
 
     // Sump Water Mesh
-    const sumpWaterGeo = new THREE.BoxGeometry(5.8, 1, 5.8);
-    const sumpWaterMat = new THREE.MeshStandardMaterial({
-      color: 0x059669,
-      transparent: true,
-      opacity: 0.8,
-      roughness: 0.1
-    });
-    const sumpWaterMesh = new THREE.Mesh(sumpWaterGeo, sumpWaterMat);
-    sumpWaterMesh.position.set(0, -4.2, 0);
+    const sumpWaterGeo = new THREE.BoxGeometry(5.3, 1, 5.3);
+    const sumpWaterMesh = new THREE.Mesh(
+      sumpWaterGeo,
+      new THREE.MeshStandardMaterial({ color: 0x059669, transparent: true, opacity: 0.8, roughness: 0.1 })
+    );
+    sumpWaterMesh.position.set(0, -4.1, 0);
     sumpGroup.add(sumpWaterMesh);
 
-    // 100HP Centrifugal Pump Housing
+    // Centrifugal Pump Housing
     const pumpMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.6, roughness: 0.3 });
-    const pumpHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.7, 1.2, 16), pumpMat);
-    pumpHousing.position.set(1.6, -3.2, 0);
+    const pumpHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 1.1, 16), pumpMat);
+    pumpHousing.position.set(1.5, -3.1, 0);
     sumpGroup.add(pumpHousing);
 
-    // Impeller
-    const impellerMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const impeller = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.8), impellerMat);
-    impeller.position.set(1.6, -3.7, 0);
+    // Spinning Impeller
+    const impeller = new THREE.Mesh(
+      new THREE.BoxGeometry(0.7, 0.1, 0.7),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    impeller.position.set(1.5, -3.6, 0);
     sumpGroup.add(impeller);
 
     // Discharge Pipe
-    const pipeGeo = new THREE.CylinderGeometry(0.25, 0.25, 14, 12);
-    const pipeMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.5 });
-    const dischargePipe = new THREE.Mesh(pipeGeo, pipeMat);
+    const dischargePipe = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.22, 0.22, 14, 12),
+      new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.6 })
+    );
     dischargePipe.rotation.z = Math.PI / 2;
-    dischargePipe.position.set(8, -3.0, 0);
+    dischargePipe.position.set(7.8, -2.9, 0);
     sumpGroup.add(dischargePipe);
-
-    // Road Drainage Inlet Grate
-    const grateGeo = new THREE.PlaneGeometry(2.5, 2.5);
-    const grateMat = new THREE.MeshBasicMaterial({ color: 0x0f172a, wireframe: true });
-    const grate = new THREE.Mesh(grateGeo, grateMat);
-    grate.rotation.x = -Math.PI / 2;
-    grate.position.set(0, -1.54, 0);
-    sumpGroup.add(grate);
 
     scene.add(sumpGroup);
 
-    // 6. Surface Flood Water Mesh
-    const floodWaterGeo = new THREE.BoxGeometry(10.8, 1, 28);
+    // 9. Surface Flood Water Inundation Mesh (Inside Underpass)
+    const floodWaterGeo = new THREE.BoxGeometry(10.5, 1, 22);
     const floodWaterMat = new THREE.MeshStandardMaterial({
       color: 0x0284c7,
       transparent: true,
-      opacity: 0.78,
+      opacity: 0.82,
       roughness: 0.08,
-      metalness: 0.2
+      metalness: 0.25
     });
     const floodWaterMesh = new THREE.Mesh(floodWaterGeo, floodWaterMat);
-    floodWaterMesh.position.set(0, -1.55, 0);
+    floodWaterMesh.position.set(0, -1.6, 0);
     floodWaterMesh.scale.set(1, 0.01, 1);
     scene.add(floodWaterMesh);
 
-    // 7. Depth Measuring Ruler
+    // 10. Calibrated Depth Measuring Ruler (Metric Gauging Pole)
     const rulerGroup = new THREE.Group();
-    const poleGeo = new THREE.CylinderGeometry(0.08, 0.08, 3.2, 12);
-    const poleMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
-    const pole = new THREE.Mesh(poleGeo, poleMat);
-    pole.position.set(4.5, -0.2, -1.5);
+    const pole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.08, 3.0, 12),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a })
+    );
+    pole.position.set(4.8, -0.3, 1.5);
     rulerGroup.add(pole);
 
-    const bandMatGreen = new THREE.MeshBasicMaterial({ color: 0x10b981 });
-    const bandMatAmber = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
-    const bandMatRed = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    const b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.08, 12), new THREE.MeshBasicMaterial({ color: 0x10b981 }));
+    b1.position.set(4.8, -1.4, 1.5); // 15cm Green (Safe)
+    rulerGroup.add(b1);
 
-    const band1 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.06, 12), bandMatGreen);
-    band1.position.set(4.5, -1.35, -1.5); // 15cm
-    rulerGroup.add(band1);
+    const b2 = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.08, 12), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
+    b2.position.set(4.8, -1.2, 1.5); // 25cm Amber (Caution)
+    rulerGroup.add(b2);
 
-    const band2 = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.06, 12), bandMatAmber);
-    band2.position.set(4.5, -1.2, -1.5); // 25cm
-    rulerGroup.add(band2);
-
-    const band3 = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.06, 12), bandMatRed);
-    band3.position.set(4.5, -0.9, -1.5); // 45cm
-    rulerGroup.add(band3);
+    const b3 = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.08, 12), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
+    b3.position.set(4.8, -0.85, 1.5); // 45cm Red (Flooded)
+    rulerGroup.add(b3);
 
     scene.add(rulerGroup);
 
-    // 8. 3D Vehicle Models
+    // 11. ANIMATED VEHICLES FLEET
     const vehiclesGroup = new THREE.Group();
-
-    // Car (Sedan)
-    const carGroup = new THREE.Group();
-    const carBody = new THREE.Mesh(
-      new THREE.BoxGeometry(2.0, 0.7, 4.2),
-      new THREE.MeshStandardMaterial({ color: 0x4f46e5, metalness: 0.6, roughness: 0.3 })
-    );
-    carBody.position.set(0, 0.6, 0);
-    carBody.castShadow = true;
-    carGroup.add(carBody);
-
-    const carRoof = new THREE.Mesh(
-      new THREE.BoxGeometry(1.6, 0.6, 2.2),
-      new THREE.MeshStandardMaterial({ color: 0x312e81, roughness: 0.2 })
-    );
-    carRoof.position.set(0, 1.2, -0.2);
-    carRoof.castShadow = true;
-    carGroup.add(carRoof);
-
-    // Car wheels
     const wheelMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.9 });
     const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.25, 16);
-    [[-1.0, 1.3], [1.0, 1.3], [-1.0, -1.3], [1.0, -1.3]].forEach(([x, z]) => {
+
+    // VEHICLE A: Approaching Moving White Sedan
+    const movingCar = new THREE.Group();
+    const car1Body = new THREE.Mesh(
+      new THREE.BoxGeometry(2.0, 0.7, 4.2),
+      new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2, metalness: 0.4 })
+    );
+    car1Body.position.set(0, 0.55, 0);
+    movingCar.add(car1Body);
+
+    const car1Cabin = new THREE.Mesh(
+      new THREE.BoxGeometry(1.6, 0.6, 2.2),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.2 })
+    );
+    car1Cabin.position.set(0, 1.15, -0.2);
+    movingCar.add(car1Cabin);
+
+    [[-1.0, 1.3], [1.0, 1.3], [-1.0, -1.3], [1.0, -1.3]].forEach(([wx, wz]) => {
       const w = new THREE.Mesh(wheelGeo, wheelMat);
       w.rotation.z = Math.PI / 2;
-      w.position.set(x, 0.35, z);
-      w.castShadow = true;
-      carGroup.add(w);
+      w.position.set(wx, 0.35, wz);
+      movingCar.add(w);
     });
 
-    carGroup.position.set(-2.2, -1.55, 1.5);
-    vehiclesGroup.add(carGroup);
+    // Headlights
+    const carHeadlight = new THREE.PointLight(0xffedd5, 1.6, 14);
+    carHeadlight.position.set(0, 0.6, -2.2);
+    movingCar.add(carHeadlight);
 
-    // 2-Wheeler Motorcycle
-    const bikeGroup = new THREE.Group();
-    const bikeFrame = new THREE.Mesh(
-      new THREE.BoxGeometry(0.4, 0.6, 1.8),
-      new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4 })
+    // Amber Turn Signal Blinker
+    const carBlinkerR = new THREE.PointLight(0xf59e0b, 0, 8);
+    carBlinkerR.position.set(1.0, 0.6, -2.1);
+    movingCar.add(carBlinkerR);
+
+    movingCar.position.set(-2.0, 0.3, 25);
+    vehiclesGroup.add(movingCar);
+
+    // VEHICLE B: Stranded Blue Sedan (Directly visible in puddle in front of bridge)
+    const strandedCar = new THREE.Group();
+    const car2Body = new THREE.Mesh(
+      new THREE.BoxGeometry(2.0, 0.7, 4.2),
+      new THREE.MeshStandardMaterial({ color: 0x2563eb, metalness: 0.5, roughness: 0.3 })
     );
-    bikeFrame.position.set(0, 0.6, 0);
-    bikeGroup.add(bikeFrame);
+    car2Body.position.set(0, 0.55, 0);
+    strandedCar.add(car2Body);
 
-    const bikeWheel1 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.1, 12), wheelMat);
-    bikeWheel1.rotation.z = Math.PI / 2;
-    bikeWheel1.position.set(0, 0.3, 0.8);
-    bikeGroup.add(bikeWheel1);
+    const car2Cabin = new THREE.Mesh(
+      new THREE.BoxGeometry(1.6, 0.6, 2.2),
+      new THREE.MeshStandardMaterial({ color: 0x172554, roughness: 0.2 })
+    );
+    car2Cabin.position.set(0, 1.15, -0.2);
+    strandedCar.add(car2Cabin);
 
-    const bikeWheel2 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.1, 12), wheelMat);
-    bikeWheel2.rotation.z = Math.PI / 2;
-    bikeWheel2.position.set(0, 0.3, -0.8);
-    bikeGroup.add(bikeWheel2);
+    [[-1.0, 1.3], [1.0, 1.3], [-1.0, -1.3], [1.0, -1.3]].forEach(([wx, wz]) => {
+      const w = new THREE.Mesh(wheelGeo, wheelMat);
+      w.rotation.z = Math.PI / 2;
+      w.position.set(wx, 0.35, wz);
+      strandedCar.add(w);
+    });
 
-    bikeGroup.position.set(2.4, -1.55, -2.0);
-    vehiclesGroup.add(bikeGroup);
+    // Stranded Hazard Flashers (Flashing Amber)
+    const strandedHazardL = new THREE.PointLight(0xf59e0b, 0, 8);
+    strandedHazardL.position.set(-1.0, 0.6, 2.1);
+    strandedCar.add(strandedHazardL);
+
+    const strandedHazardR = new THREE.PointLight(0xf59e0b, 0, 8);
+    strandedHazardR.position.set(1.0, 0.6, 2.1);
+    strandedCar.add(strandedHazardR);
+
+    strandedCar.position.set(-2.2, -1.55, 4.0); // Placed at z = 4.0 in full view
+    vehiclesGroup.add(strandedCar);
+
+    // VEHICLE C: Emergency Rescue Ambulance (Traveling on safe elevated flyover bypass)
+    const ambGroup = new THREE.Group();
+    const ambBody = new THREE.Mesh(
+      new THREE.BoxGeometry(2.2, 1.6, 5.0),
+      new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 })
+    );
+    ambBody.position.set(0, 1.1, 0);
+    ambGroup.add(ambBody);
+
+    const redCross = new THREE.Mesh(
+      new THREE.BoxGeometry(0.3, 0.8, 0.05),
+      new THREE.MeshBasicMaterial({ color: 0xef4444 })
+    );
+    redCross.position.set(1.12, 1.2, 0);
+    ambGroup.add(redCross);
+
+    [[-1.1, 1.6], [1.1, 1.6], [-1.1, -1.6], [1.1, -1.6]].forEach(([wx, wz]) => {
+      const w = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.28, 16), wheelMat);
+      w.rotation.z = Math.PI / 2;
+      w.position.set(wx, 0.45, wz);
+      ambGroup.add(w);
+    });
+
+    // Flashing Emergency Strobe Lights (Red / Blue)
+    const ambStrobeL = new THREE.PointLight(0xef4444, 2.5, 12);
+    ambStrobeL.position.set(-0.6, 2.1, 0.6);
+    ambGroup.add(ambStrobeL);
+
+    const ambStrobeR = new THREE.PointLight(0x3b82f6, 2.5, 12);
+    ambStrobeR.position.set(0.6, 2.1, 0.6);
+    ambGroup.add(ambStrobeR);
+
+    ambGroup.position.set(13.5, 4.1, 5); // On elevated bypass flyover!
+    vehiclesGroup.add(ambGroup);
 
     scene.add(vehiclesGroup);
 
-    // 9. 3D Rainfall Particle System
-    const RAIN_COUNT = 1500;
-    const rainGeo = new THREE.BufferGeometry();
-    const rainPositions = new Float32Array(RAIN_COUNT * 3);
+    // 12. REALISTIC 3D RAIN LINE STREAKS
+    const RAIN_STREAK_COUNT = 1200;
+    const rainPositions = new Float32Array(RAIN_STREAK_COUNT * 6);
 
-    for (let i = 0; i < RAIN_COUNT * 3; i += 3) {
-      rainPositions[i] = (Math.random() - 0.5) * 60;
-      rainPositions[i + 1] = Math.random() * 30 + 1;
-      rainPositions[i + 2] = (Math.random() - 0.5) * 60;
+    for (let i = 0; i < RAIN_STREAK_COUNT; i++) {
+      const rx = (Math.random() - 0.5) * 65;
+      const ry = Math.random() * 26 + 1;
+      const rz = (Math.random() - 0.5) * 65;
+
+      rainPositions[i * 6] = rx;
+      rainPositions[i * 6 + 1] = ry;
+      rainPositions[i * 6 + 2] = rz;
+
+      rainPositions[i * 6 + 3] = rx - 0.22;
+      rainPositions[i * 6 + 4] = ry - 1.8;
+      rainPositions[i * 6 + 5] = rz - 0.15;
     }
 
+    const rainGeo = new THREE.BufferGeometry();
     rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
-    const rainMat = new THREE.PointsMaterial({
-      color: 0x38bdf8,
-      size: 0.2,
-      transparent: true,
-      opacity: 0.0
-    });
-    const rainSystem = new THREE.Points(rainGeo, rainMat);
-    scene.add(rainSystem);
 
-    // -------------------------------------------------------------
-    // STATE & ANIMATION LOOP
-    // -------------------------------------------------------------
-    let targetWaterDepth = 0;
+    const rainMat = new THREE.LineBasicMaterial({
+      color: 0x93c5fd,
+      transparent: true,
+      opacity: 0,
+      linewidth: 1.5
+    });
+
+    const rainMesh = new THREE.LineSegments(rainGeo, rainMat);
+    scene.add(rainMesh);
+
+    // Expanding Surface Water Splashes
+    const splashRings = [];
+    const splashGeo = new THREE.RingGeometry(0.1, 0.35, 16);
+    const splashMat = new THREE.MeshBasicMaterial({ color: 0x93c5fd, transparent: true, opacity: 0, side: THREE.DoubleSide });
+
+    for (let s = 0; s < 18; s++) {
+      const ring = new THREE.Mesh(splashGeo, splashMat.clone());
+      ring.rotation.x = -Math.PI / 2;
+      ring.visible = false;
+      scene.add(ring);
+      splashRings.push({ mesh: ring, age: Math.floor(Math.random() * 24) });
+    }
+
+    // Dynamic Variables
     let currentWaterDepth = 0;
+    let targetWaterDepth = 0;
     let rainIntensity = 0;
     let isPumpRunning = false;
-    let clock = new THREE.Clock();
+    let movingCarZ = 25;
+    let movingCarSpeed = 0.16;
 
+    // ANIMATION RENDER LOOP
+    let animId = null;
     function animate() {
-      requestAnimationFrame(animate);
-
-      const delta = clock.getDelta();
-      const time = clock.getElapsedTime();
+      animId = requestAnimationFrame(animate);
 
       if (controls) controls.update();
 
-      // Smooth water level interpolation
-      currentWaterDepth += (targetWaterDepth - currentWaterDepth) * 0.08;
+      const time = Date.now() * 0.003;
 
-      if (currentWaterDepth > 0.01) {
-        floodWaterMesh.visible = true;
-        const depthHeight = currentWaterDepth * 2.5; // Clear visual demonstration
-        floodWaterMesh.scale.y = Math.max(0.01, depthHeight);
-        floodWaterMesh.position.y = -1.55 + depthHeight / 2;
-        floodWaterMesh.rotation.y = Math.sin(time * 0.5) * 0.005;
-      } else {
-        floodWaterMesh.visible = false;
-      }
+      // Smooth hydraulic water depth interpolation
+      currentWaterDepth += (targetWaterDepth - currentWaterDepth) * 0.045;
 
-      // Sump water height
-      const sumpPct = Math.min(1.0, (state.rainIntensity * state.rainDuration * 0.2 + 0.24));
-      sumpWaterMesh.scale.y = Math.max(0.1, sumpPct * 2.2);
-      sumpWaterMesh.position.y = -4.7 + (sumpWaterMesh.scale.y / 2);
+      // Surface flood water height and ripple effect
+      const depthYScale = Math.max(0.01, currentWaterDepth * 2.8);
+      floodWaterMesh.scale.y = depthYScale;
+      floodWaterMesh.position.y = -1.6 + (depthYScale / 2);
+      floodWaterMesh.position.z = Math.sin(time * 0.8) * 0.05;
 
-      // Pump impeller rotation
+      // Sump water level
+      sumpWaterMesh.scale.y = Math.min(2.3, 0.4 + (currentWaterDepth * 2.5));
+      sumpWaterMesh.position.y = -4.3 + (sumpWaterMesh.scale.y / 2);
+
+      // Centrifugal pump impeller rotation
       if (isPumpRunning) {
-        impeller.rotation.y += 0.4;
+        impeller.rotation.y += 0.5;
         if (targetWaterDepth > 0) {
-          targetWaterDepth = Math.max(0, targetWaterDepth - 0.004);
+          targetWaterDepth = Math.max(0, targetWaterDepth - 0.006);
         }
       }
 
-      // Rain Particles animation
-      if (rainIntensity > 0) {
-        rainMat.opacity = Math.min(0.85, 0.2 + (rainIntensity / 120) * 0.65);
-        const positions = rainGeo.attributes.position.array;
-        const fallSpeed = 0.4 + (rainIntensity / 100) * 0.6;
+      // 1. ANIMATE INDIAN RAILWAYS TRAIN ACROSS BRIDGE
+      trainGroup.position.x += 0.14;
+      if (trainGroup.position.x > 45) {
+        trainGroup.position.x = -45;
+      }
 
-        for (let i = 1; i < RAIN_COUNT * 3; i += 3) {
-          positions[i] -= fallSpeed;
-          if (positions[i] < -1.8) {
-            positions[i] = 28 + Math.random() * 5;
+      // 2. ANIMATE MOVING TRAFFIC & DYNAMIC REROUTING
+      if (currentWaterDepth < 0.25) {
+        // DRY / PASSABLE: Automated barrier is UP! Car drives through subway
+        barrierArmPivot.rotation.z = Math.PI / 2.3;
+        carBlinkerR.intensity = 0;
+
+        movingCarZ -= movingCarSpeed;
+        if (movingCarZ < -26) {
+          movingCarZ = 26; // Loop back around
+        }
+
+        // Calculate elevation matching the road ramp slopes
+        let carY = -1.55;
+        if (movingCarZ > 11) carY = -1.55 + (movingCarZ - 11) * 0.145;
+        else if (movingCarZ < -11) carY = -1.55 + (-11 - movingCarZ) * 0.145;
+
+        movingCar.position.set(-2.0, carY, movingCarZ);
+        movingCar.rotation.y = 0;
+      } else {
+        // FLOODED (>25cm): Automated barrier is DOWN! Car STOPS and diverts to flyover
+        barrierArmPivot.rotation.z = 0;
+
+        if (movingCarZ > 14.5) {
+          movingCarZ -= movingCarSpeed;
+          movingCar.position.set(-2.0, -1.55 + (movingCarZ - 11) * 0.145, movingCarZ);
+          movingCar.rotation.y = 0;
+        } else {
+          // Stopped before the barrier: right amber turn signal flashes and car veers towards flyover
+          const blink = Math.sin(time * 10) > 0;
+          carBlinkerR.intensity = blink ? 2.5 : 0;
+          movingCar.rotation.y = 0.38;
+        }
+      }
+
+      // 3. ANIMATE STRANDED BLUE CAR IN FLOODWATER
+      if (currentWaterDepth >= 0.15) {
+        const blink = Math.sin(time * 8) > 0;
+        strandedHazardL.intensity = blink ? 2.8 : 0;
+        strandedHazardR.intensity = blink ? 2.8 : 0;
+        strandedCar.position.y = -1.55 + Math.min(0.25, currentWaterDepth * 0.35) + Math.sin(time * 3) * 0.015;
+      } else {
+        strandedHazardL.intensity = 0;
+        strandedHazardR.intensity = 0;
+        strandedCar.position.y = -1.55;
+      }
+
+      // 4. ANIMATE AMBULANCE EMERGENCY STROBES
+      const strobe = Math.sin(time * 14);
+      ambStrobeL.intensity = strobe > 0 ? 3.0 : 0.2;
+      ambStrobeR.intensity = strobe <= 0 ? 3.0 : 0.2;
+
+      // 5. ANIMATE 3D RAIN STREAKS & SPLASHES
+      if (rainIntensity > 0) {
+        rainMat.opacity = Math.min(0.85, 0.3 + (rainIntensity / 100) * 0.55);
+        const pos = rainGeo.attributes.position.array;
+        const fallSpeed = 0.5 + (rainIntensity / 80) * 0.7;
+
+        for (let i = 0; i < RAIN_STREAK_COUNT; i++) {
+          const idx = i * 6;
+          pos[idx + 1] -= fallSpeed;
+          pos[idx + 4] -= fallSpeed;
+
+          if (pos[idx + 1] < -1.8) {
+            const rx = (Math.random() - 0.5) * 65;
+            const ry = 26 + Math.random() * 4;
+            const rz = (Math.random() - 0.5) * 65;
+            pos[idx] = rx;
+            pos[idx + 1] = ry;
+            pos[idx + 2] = rz;
+            pos[idx + 3] = rx - 0.22;
+            pos[idx + 4] = ry - 1.8;
+            pos[idx + 5] = rz - 0.15;
           }
         }
         rainGeo.attributes.position.needsUpdate = true;
+
+        // Animate splash rings
+        splashRings.forEach(sr => {
+          sr.age += 1;
+          if (sr.age > 22) {
+            sr.age = 0;
+            sr.mesh.position.set((Math.random() - 0.5) * 8.5, -1.58 + Math.max(0, currentWaterDepth * 2.8), (Math.random() - 0.5) * 18);
+            sr.mesh.scale.set(0.2, 0.2, 0.2);
+            sr.mesh.visible = true;
+          } else {
+            const factor = sr.age / 22;
+            sr.mesh.scale.set(1 + factor * 2.6, 1 + factor * 2.6, 1);
+            sr.mesh.material.opacity = Math.max(0, 0.7 * (1 - factor));
+          }
+        });
       } else {
         rainMat.opacity = 0;
+        splashRings.forEach(sr => { sr.mesh.visible = false; });
       }
 
-      // Beacon lights flash if flooded
+      // 6. PORTAL WARNING BEACONS (Green -> Amber -> Flashing Red)
       if (currentWaterDepth >= 0.25) {
         const flash = Math.sin(time * 12) > 0;
         warningBeaconL.color.setHex(flash ? 0xef4444 : 0x450a0a);
         warningBeaconR.color.setHex(flash ? 0xef4444 : 0x450a0a);
-        warningBeaconL.intensity = flash ? 3 : 0.2;
-        warningBeaconR.intensity = flash ? 3 : 0.2;
+        warningBeaconL.intensity = flash ? 3.5 : 0.2;
+        warningBeaconR.intensity = flash ? 3.5 : 0.2;
       } else if (currentWaterDepth >= 0.15) {
         warningBeaconL.color.setHex(0xf59e0b);
         warningBeaconR.color.setHex(0xf59e0b);
-        warningBeaconL.intensity = 1.5;
-        warningBeaconR.intensity = 1.5;
+        warningBeaconL.intensity = 1.8;
+        warningBeaconR.intensity = 1.8;
       } else {
         warningBeaconL.color.setHex(0x10b981);
         warningBeaconR.color.setHex(0x10b981);
-        warningBeaconL.intensity = 1.0;
-        warningBeaconR.intensity = 1.0;
+        warningBeaconL.intensity = 1.2;
+        warningBeaconR.intensity = 1.2;
       }
 
       renderer.render(scene, camera);
     }
-
     animate();
 
     function onResize() {
-      if (!container) return;
+      if (!container || !renderer || !camera) return;
       camera.aspect = container.clientWidth / container.clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(container.clientWidth, container.clientHeight);
     }
     window.addEventListener('resize', onResize);
 
-    // CONTROLLER METHODS
+    // TWIN SIM INTERFACE
     twinSim = {
-      updateWaterAndRain(depthMeters, intensity, status, sumpVol) {
+      updateWaterAndRain(depthMeters, rainRate, status, volumeL) {
         targetWaterDepth = depthMeters;
-        rainIntensity = intensity;
+        rainIntensity = rainRate;
 
         const depthVal = document.getElementById('twin-depth-val');
         const statusBadge = document.getElementById('twin-status-badge');
-        const rainDisp = document.getElementById('twin-rain-val');
-        const rainSlider = document.getElementById('twin-rain-slider');
+        const rainBadge = document.getElementById('twin-disp-rain');
 
-        if (depthVal) depthVal.textContent = (depthMeters * 100).toFixed(0);
-        if (rainDisp) rainDisp.textContent = `${intensity} mm/hr`;
-        if (rainSlider && document.activeElement !== rainSlider) rainSlider.value = intensity;
+        if (depthVal) depthVal.textContent = `${(depthMeters * 100).toFixed(0)}`;
+        if (rainBadge) rainBadge.textContent = `${rainRate} mm/hr`;
 
         if (statusBadge) {
-          if (depthMeters <= 0.08) {
-            statusBadge.className = 'gauge-status safe';
+          if (status === 'green') {
             statusBadge.textContent = 'PASSABLE (<10cm)';
-          } else if (depthMeters <= 0.25) {
+            statusBadge.className = 'gauge-status safe';
+          } else if (status === 'orange') {
+            statusBadge.textContent = 'CAUTION (16cm)';
             statusBadge.className = 'gauge-status warning';
-            statusBadge.textContent = 'CAUTION (10-25cm)';
           } else {
+            statusBadge.textContent = 'SUBWAY FLOODED';
             statusBadge.className = 'gauge-status danger';
-            statusBadge.textContent = '⛔ SUBWAY FLOODED';
           }
         }
 
+        // Update Vehicle Clearance Badges in 3D HUD
         const statBike = document.getElementById('tv-stat-bike');
         const statCar = document.getElementById('tv-stat-car');
         const statAmb = document.getElementById('tv-stat-amb');
 
         if (statBike) {
           if (depthMeters >= 0.15) {
-            statBike.className = 'tv-stat danger';
-            statBike.textContent = 'Stalled (>15cm)';
+            statBike.textContent = 'Stalled (>15cm)'; statBike.className = 'tv-stat danger';
           } else {
-            statBike.className = 'tv-stat safe';
-            statBike.textContent = 'Safe (<15cm)';
+            statBike.textContent = 'Safe (<15cm)'; statBike.className = 'tv-stat safe';
           }
         }
 
         if (statCar) {
           if (depthMeters >= 0.25) {
-            statCar.className = 'tv-stat danger';
-            statCar.textContent = 'Intake Submerged (>25cm)';
+            statCar.textContent = 'Intake Submerged (>25cm)'; statCar.className = 'tv-stat danger';
+          } else if (depthMeters >= 0.15) {
+            statCar.textContent = 'Advisory Crawl (15cm)'; statCar.className = 'tv-stat warn';
           } else {
-            statCar.className = 'tv-stat safe';
-            statCar.textContent = 'Safe (<25cm)';
+            statCar.textContent = 'Safe (<25cm)'; statCar.className = 'tv-stat safe';
           }
         }
 
         if (statAmb) {
-          if (depthMeters >= 0.45) {
-            statAmb.className = 'tv-stat danger';
-            statAmb.textContent = 'Exhaust Blocked (>45cm)';
+          if (depthMeters >= 0.60) {
+            statAmb.textContent = 'Critical (>60cm)'; statAmb.className = 'tv-stat danger';
+          } else if (depthMeters >= 0.45) {
+            statAmb.textContent = 'Extreme (45cm)'; statAmb.className = 'tv-stat warn';
           } else {
-            statAmb.className = 'tv-stat safe';
-            statAmb.textContent = 'Safe (<45cm)';
+            statAmb.textContent = 'Safe (<45cm)'; statAmb.className = 'tv-stat safe';
           }
         }
       },
@@ -1481,15 +1740,24 @@ document.addEventListener('DOMContentLoaded', () => {
       setCameraView(type) {
         if (!controls) return;
         if (type === 'orbit') {
-          camera.position.set(24, 18, 28);
-          controls.target.set(0, 0, 0);
+          camera.position.set(-20, 14, 25);
+          controls.target.set(1.0, -0.6, 2);
         } else if (type === 'driver') {
-          camera.position.set(-2.2, -0.6, 6);
-          controls.target.set(-2.2, -1.2, -8);
+          // Driver's eye level behind steering wheel
+          camera.position.set(-2.0, -0.2, 8);
+          controls.target.set(-2.0, -1.0, -12);
         } else if (type === 'cutaway') {
-          camera.position.set(26, -1.0, 0);
-          controls.target.set(0, -2.5, 0);
+          // Profile cutaway showing road dip, floodwater and underground sump
+          camera.position.set(24, -0.2, 0);
+          controls.target.set(0, -2.2, 0);
         }
+        controls.update();
+      },
+
+      resetCamera() {
+        if (!controls) return;
+        camera.position.set(-20, 14, 25);
+        controls.target.set(1.0, -0.6, 2);
         controls.update();
       },
 
@@ -1499,7 +1767,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const stateTxt = document.getElementById('twin-pump-state');
         if (btn && stateTxt) {
           btn.classList.toggle('running', isPumpRunning);
-          stateTxt.textContent = isPumpRunning ? 'RUNNING (DISCHARGING)' : 'STANDBY';
+          stateTxt.textContent = isPumpRunning ? 'RUNNING (DISCHARGING 3,800 LPM)' : 'STANDBY';
         }
       },
 
@@ -1528,13 +1796,29 @@ document.addEventListener('DOMContentLoaded', () => {
         : 'Ganesapuram Subway (North Chennai - Vyasarpadi)';
     }
 
+    // Sync 3D scenario buttons and slider with current state
+    const twinBtnClear = document.getElementById('twin-btn-clear');
+    const twinBtnRain = document.getElementById('twin-btn-rain');
+    const twinBtnDeluge = document.getElementById('twin-btn-deluge');
+    const twinRainSlider = document.getElementById('twin-rain-slider');
+    const twinRainVal = document.getElementById('twin-rain-val');
+
+    if (twinRainSlider) twinRainSlider.value = state.rainIntensity;
+    if (twinRainVal) twinRainVal.textContent = `${state.rainIntensity} mm/hr`;
+
+    [twinBtnClear, twinBtnRain, twinBtnDeluge].forEach(b => { if (b) b.classList.remove('active'); });
+    if (state.rainIntensity === 0 && twinBtnClear) twinBtnClear.classList.add('active');
+    else if (state.rainIntensity <= 60 && twinBtnRain) twinBtnRain.classList.add('active');
+    else if (twinBtnDeluge) twinBtnDeluge.classList.add('active');
+
     setTimeout(() => {
       if (!twinSim) {
         init3DTwinSimulation();
       }
       if (twinSim) {
+        twinSim.resetCamera();
         twinSim.resize();
-        twinSim.updateWaterAndRain(state.sensor.waterDepthMeters, state.rainIntensity, state.sensor.status, 0);
+        twinSim.updateWaterAndRain(state.sensor.waterDepthMeters, state.rainIntensity, state.sensor.status, state.sensor.currentVolume);
       }
     }, 60);
   }
@@ -1576,20 +1860,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (camDriver) camDriver.addEventListener('click', () => setCamActive(camDriver, 'driver'));
   if (camCutaway) camCutaway.addEventListener('click', () => setCamActive(camCutaway, 'cutaway'));
 
-  // 3D Studio Scenario Buttons
+  // 3D Studio Scenario Buttons - Now wired to unified applyScenario!
   const twinBtnClear = document.getElementById('twin-btn-clear');
   const twinBtnRain = document.getElementById('twin-btn-rain');
   const twinBtnDeluge = document.getElementById('twin-btn-deluge');
 
-  function set3DScenarioActive(btn, preset) {
-    [twinBtnClear, twinBtnRain, twinBtnDeluge].forEach(b => { if (b) b.classList.remove('active'); });
-    if (btn) btn.classList.add('active');
-    setScenarioPreset(preset);
-  }
-
-  if (twinBtnClear) twinBtnClear.addEventListener('click', () => set3DScenarioActive(twinBtnClear, 'clear'));
-  if (twinBtnRain) twinBtnRain.addEventListener('click', () => set3DScenarioActive(twinBtnRain, 'rain2h'));
-  if (twinBtnDeluge) twinBtnDeluge.addEventListener('click', () => set3DScenarioActive(twinBtnDeluge, 'deluge'));
+  if (twinBtnClear) twinBtnClear.addEventListener('click', () => applyScenario('clear'));
+  if (twinBtnRain) twinBtnRain.addEventListener('click', () => applyScenario('rain2h'));
+  if (twinBtnDeluge) twinBtnDeluge.addEventListener('click', () => applyScenario('deluge'));
 
   // 3D Studio Pump Trigger
   const btnTwinPump = document.getElementById('btn-twin-pump');
@@ -1604,6 +1882,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (twinRainSlider) {
     twinRainSlider.addEventListener('input', (e) => {
       state.rainIntensity = parseInt(e.target.value, 10);
+      const rainSlider = document.getElementById('rain-slider');
+      if (rainSlider) rainSlider.value = state.rainIntensity;
+      const twinRainVal = document.getElementById('twin-rain-val');
+      if (twinRainVal) twinRainVal.textContent = `${state.rainIntensity} mm/hr`;
       calculateHydrology();
     });
   }
