@@ -1,6 +1,6 @@
-# Chennai Jal-Marg (சென்னை மழை & வெள்ள வழித்தடம்)
-### Real-Time IoT Urban Flood Prediction & Dynamic Traffic Rerouting System
-**Developed for Smart India Hackathon (SIH 2026)**
+# FloodCast AI
+### Real-Time IoT Urban Flood Nowcasting & Dynamic Traffic Rerouting System
+**Developed for Smart India Hackathon (SIH 2026 - Problem Statement SIH-26085: MoES)**
 
 ---
 
@@ -11,12 +11,13 @@ Furthermore, civic bodies like Greater Chennai Corporation (GCC) often react onl
 
 ---
 
-## 💡 The Solution: Chennai Jal-Marg
-Chennai Jal-Marg bridges the gap between **civic stormwater drainage monitoring** and **consumer turn-by-turn navigation**:
+## 💡 The Solution: FloodCast AI
+FloodCast AI bridges the gap between **civic stormwater drainage monitoring** and **consumer turn-by-turn navigation**:
 1. **IoT Micro-Sump Network:** Ultrasonic depth transmitters monitor street drain catch-pits (calibrated to $500\text{L}$ volume).
 2. **Predictive Surcharge Warning:** The moment a drain hits **450L (90% capacity)** or continuous rainfall exceeds 1–2 hours, the road color transitions to **Orange (Warning)** and then **Red (Flooded / Blocked)**.
 3. **Dynamic Rerouting Engine:** Rather than letting vehicles enter a flooded subway, the route **dynamically snaps to elevated high-ground bypasses** (such as the *Alandur / Kathipara Grade Separator* in South Chennai or *Vyasarpadi Murasoli Maran Flyover* in North Chennai).
-4. **Hydrological Macro Integration:** Accurately connects local road catchments to Chennai's **13,222 MCFT total reservoir system** (Chembarambakkam, Puzhal, Poondi) and the **4 Natural Sea Gateways** into the Bay of Bengal (*Ennore Creek, Cooum Mouth, Adyar Estuary, Kovalam/Muttukadu*).
+4. **3D Physical Digital Twin Simulator:** Built with Three.js, allowing evaluators to inspect the subway cross-section, overhead railway bridge, transparent sump cutaway, dynamic water rise, and emergency 100HP pump dewatering.
+5. **Hydrological Macro Integration:** Accurately connects local road catchments to Chennai's **13,222 MCFT total reservoir system** (Chembarambakkam, Puzhal, Poondi) and the **4 Natural Sea Gateways** into the Bay of Bengal (*Ennore Creek, Cooum Mouth, Adyar Estuary, Kovalam/Muttukadu*).
 
 ---
 
@@ -27,7 +28,7 @@ Chennai Jal-Marg bridges the gap between **civic stormwater drainage monitoring*
 | 🟢 **Green** | $< 5\text{ cm}$ | $< 70\%$ ($< 350\text{L}$) | **Clear Flow:** Standard direct subway route active. |
 | 🟠 **Orange** | $10 - 25\text{ cm}$ | $70\% - 89\%$ ($350\text{L} - 449\text{L}$) | **Warning:** 1–2 hours continuous rain; slow speeds, two-wheelers cautioned. |
 | 🔴 **Red** | $> 30\text{ cm}$ | $\ge 90\%$ ($\ge 450\text{L}$) | **Severe Flood:** Subway submerged; automatic barrier close; **mandatory reroute**. |
-| 🔷 **Cyan (Dashed)** | High Ground (Elevated) | N/A | **Safe Bypass Route:** Flyover / Overbridge alternate path. |
+| 🟡 **Gold (Solid)** | High Ground (Elevated) | N/A | **Safe Bypass Route:** Flyover / Overbridge alternate path. |
 
 ---
 
@@ -37,7 +38,7 @@ Chennai Jal-Marg bridges the gap between **civic stormwater drainage monitoring*
   > *"Respected Jury, during the 2015 floods and Cyclone Michaung in Chennai, dozens of cars and two-wheelers were stranded inside Thillai Ganga Nagar and Vyasarpadi subways because Google Maps showed heavy traffic in red, but couldn't tell drivers that 3 feet of water was waiting inside the subway underpass."*
 
 * **[0:45 - 1:30] The Innovation:**
-  > *"We built Chennai Jal-Marg. We deployed simulated IoT ultrasonic depth sensors across GCC stormwater drains. Every drain is modeled on volume. If a 500-liter drain crosses 450 liters (90%), or continuous rain exceeds 1 hour, our system calculates hydraulic surcharge 60 minutes before the road gets flooded."*
+  > *"We built FloodCast AI. We deployed simulated IoT ultrasonic depth sensors across GCC stormwater drains. Every drain is modeled on volume. If a 500-liter drain crosses 450 liters (90%), or continuous rain exceeds 1 hour, our system calculates hydraulic surcharge 60 minutes before the road gets flooded. Plus, evaluators can click our 3D Twin to inspect the subway cross-section and watch floodwaters rise in real-time."*
 
 * **[1:30 - 2:30] The Live Demo (Perform this on screen):**
   > 1. *"Look at Preset 1: Under clear skies, the driver takes Thillai Ganga Nagar Subway directly (8 mins, Green line)."*

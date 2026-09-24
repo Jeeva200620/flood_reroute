@@ -1,7 +1,7 @@
 /**
- * CHENNAI JAL-MARG: EXECUTIVE COMPACT ENGINE (SIH 2026 - MoES SIH-26085)
- * Urban Flood Nowcasting, Drainage-Rainfall Coupling & Dynamic Traffic Rerouting
- * Zero Watermarks • OpenStreetMap / Esri Tile Layers • Vehicle Clearance Matrix
+ * FLOODCAST AI: URBAN FLOOD NOWCASTING & CIVIC REROUTING ENGINE (SIH 2026 - MoES SIH-26085)
+ * Real-Time Urban Flood Nowcasting, Drainage-Rainfall Coupling & Dynamic Traffic Rerouting
+ * Zero Watermarks • Esri High-Res Tiles • 3D Hydraulic Digital Twin
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -394,7 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // -------------------------------------------------------------
-    // JAL-MARG AI MODE:
+    // FLOODCAST AI MODE:
     // Hydrological nowcasting couples drainage surcharge with proactive bypass!
     // -------------------------------------------------------------
     document.getElementById('google-maps-banner').classList.add('hidden');
@@ -815,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Google Maps Mode vs Jal-Marg AI Toggle
+  // Google Maps Mode vs FloodCast AI Toggle
   const btnModeJalmarg = document.getElementById('btn-mode-jalmarg');
   const btnModeGoogle = document.getElementById('btn-mode-google');
 
@@ -823,7 +823,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.activeMode = 'jalmarg';
     btnModeJalmarg.classList.add('active');
     btnModeGoogle.classList.remove('active');
-    addLog('normal', 'Switched to JAL-MARG AI Mode: Hydro-aware coupled predictive navigation active.');
+    addLog('normal', 'Switched to FLOODCAST AI Mode: Hydro-aware coupled predictive navigation active.');
     updateRouteDisplay();
   });
 
@@ -1611,5 +1611,5 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial Execution
   initMapRainCanvas();
   calculateHydrology();
-  addLog('system', 'Chennai Jal-Marg engine initialized. MoES SIH-26085 prototype active.');
+  addLog('system', 'FloodCast AI engine initialized. MoES SIH-26085 prototype active.');
 });
