@@ -252,19 +252,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const hotspotLayer = L.layerGroup().addTo(map);
   const routeLayer = L.layerGroup().addTo(map);
 
-  // Render Buckingham Canal Spine (Dotted Blue)
+  // Render Buckingham Canal Spine (Dotted Teal)
   L.polyline(CHENNAI_DATA.buckinghamCanal, {
-    color: '#0284c7',
+    color: '#0d9488',
     weight: 3.5,
     dashArray: '6, 8',
-    opacity: 0.8
+    opacity: 0.85
   }).bindPopup('<strong>Buckingham Canal (Interceptor Spine)</strong><br>Links Kosasthalaiyar, Cooum & Adyar basins with sea backwaters.').addTo(canalLayer);
 
   // Render 4 Sea Exit Gateways
   CHENNAI_DATA.gateways.forEach(gw => {
     const marker = L.circleMarker(gw.coords, {
       radius: 9,
-      fillColor: '#06b6d4',
+      fillColor: '#0d9488',
       color: '#ffffff',
       weight: 2,
       fillOpacity: 0.95
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     marker.bindPopup(`
       <div style="font-family: sans-serif; min-width: 190px;">
-        <h4 style="margin:0 0 4px 0; color:#0284c7;">${gw.name}</h4>
+        <h4 style="margin:0 0 4px 0; color:#0f766e;">${gw.name}</h4>
         <p style="margin:0 0 4px 0; font-size:11px; color:#334155;"><strong>Basin:</strong> ${gw.basin}</p>
         <p style="margin:0; font-size:11px; color:#64748b;">${gw.desc}</p>
       </div>
@@ -422,16 +422,16 @@ document.addEventListener('DOMContentLoaded', () => {
       state.rerouteActive = true;
 
       alternateRouteLine = L.polyline(corr.alternatePath, {
-        color: '#06b6d4',
+        color: '#f59e0b',
         weight: 6,
         dashArray: '8, 8',
         opacity: 1,
-        className: 'route-glow-cyan'
+        className: 'route-glow-amber'
       }).addTo(routeLayer);
 
       alternateRouteLine.bindPopup(`
         <div style="font-family:sans-serif; min-width:210px; color:#0f172a;">
-          <h4 style="color:#0284c7; margin:0 0 4px 0;">🛡️ PROACTIVE HIGH-GROUND REROUTE</h4>
+          <h4 style="color:#b45309; margin:0 0 4px 0;">🛡️ PROACTIVE HIGH-GROUND REROUTE</h4>
           <p style="margin:0; font-size:11px;">Subway water depth (${(waterDepth * 100).toFixed(0)} cm) exceeds safe vehicle limit. Diverted via <strong>${state.currentCorridor === 'south' ? 'Kathipara / Alandur Flyover' : 'Basin Bridge Murasoli Maran Flyover'}</strong>.</p>
         </div>
       `).openPopup();
@@ -664,6 +664,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. Map Overlays & Route Lines
     renderHotspotMarkers();
     updateRouteDisplay();
+
+    // 5. Update 2D Map Live Rain Canvas
+    updateMapRain(state.rainIntensity);
+
+    // 6. Update 3D Digital Twin Simulation
+    if (twinSim && typeof twinSim.updateWaterAndRain === 'function') {
+      twinSim.updateWaterAndRain(state.sensor.waterDepthMeters, state.rainIntensity, state.sensor.status, vol);
+    }
   }
 
   function updateGatewaysFlow() {
@@ -890,7 +898,718 @@ document.addEventListener('DOMContentLoaded', () => {
     addLog('normal', 'SYSTEM RESET: Emergency override flags cleared. Standing by.');
   });
 
+  // =========================================================================
+  // 9. 2D MAP LIVE RAINFALL WEATHER OVERLAY
+  // =========================================================================
+  const rainCanvas = document.getElementById('map-rain-canvas');
+  let rainCtx = null;
+  const rainDrops = [];
+  const MAX_RAIN_DROPS = 180;
+
+  function initMapRainCanvas() {
+    if (!rainCanvas) return;
+    rainCtx = rainCanvas.getContext('2d');
+    resizeRainCanvas();
+    window.addEventListener('resize', resizeRainCanvas);
+
+    for (let i = 0; i < MAX_RAIN_DROPS; i++) {
+      rainDrops.push({
+        x: Math.random() * (rainCanvas.width || 800),
+        y: Math.random() * (rainCanvas.height || 600),
+        len: 12 + Math.random() * 16,
+        speed: 8 + Math.random() * 8
+      });
+    }
+
+    animateRainCanvas();
+  }
+
+  function resizeRainCanvas() {
+    if (!rainCanvas) return;
+    rainCanvas.width = rainCanvas.offsetWidth;
+    rainCanvas.height = rainCanvas.offsetHeight;
+  }
+
+  function animateRainCanvas() {
+    if (!rainCtx || !rainCanvas) return;
+    rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
+
+    if (state.rainIntensity > 0) {
+      const activeCount = Math.min(MAX_RAIN_DROPS, Math.round((state.rainIntensity / 120) * MAX_RAIN_DROPS));
+      rainCtx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+      rainCtx.lineWidth = 1.3;
+      rainCtx.beginPath();
+
+      for (let i = 0; i < activeCount; i++) {
+        const d = rainDrops[i];
+        rainCtx.moveTo(d.x, d.y);
+        rainCtx.lineTo(d.x - 3, d.y + d.len);
+
+        d.y += d.speed * (0.6 + state.rainIntensity / 90);
+        d.x -= 1.4;
+
+        if (d.y > rainCanvas.height) {
+          d.y = -20;
+          d.x = Math.random() * (rainCanvas.width + 120);
+        }
+      }
+      rainCtx.stroke();
+    }
+
+    requestAnimationFrame(animateRainCanvas);
+  }
+
+  function updateMapRain(intensity) {
+    // Dynamic rain canvas picks up state.rainIntensity automatically
+  }
+
+  // =========================================================================
+  // 10. 3D DIGITAL TWIN SUBWAY & HYDRAULIC INUNDATION ENGINE (THREE.JS)
+  // =========================================================================
+  let twinSim = null;
+
+  function init3DTwinSimulation() {
+    if (typeof THREE === 'undefined') {
+      console.warn('Three.js library is loading or offline');
+      return;
+    }
+
+    const container = document.getElementById('twin-canvas-container');
+    if (!container) return;
+
+    // SCENE, CAMERA, RENDERER
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a101d); // Deep moody atmospheric backdrop
+    scene.fog = new THREE.FogExp2(0x0a101d, 0.018);
+
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(24, 18, 28);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    container.appendChild(renderer.domElement);
+
+    // ORBIT CONTROLS
+    let controls = null;
+    if (typeof THREE.OrbitControls !== 'undefined') {
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2.05;
+      controls.minDistance = 6;
+      controls.maxDistance = 85;
+      controls.target.set(0, 0, 0);
+    }
+
+    // LIGHTS
+    const ambientLight = new THREE.AmbientLight(0x94a3b8, 0.85);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfff7ed, 1.4);
+    sunLight.position.set(22, 45, 25);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
+    scene.add(sunLight);
+
+    // Subway Underpass Floodlights (Illuminating the flooded road)
+    const subwayLight1 = new THREE.PointLight(0xfef08a, 1.6, 25);
+    subwayLight1.position.set(-3, 3.2, 0);
+    scene.add(subwayLight1);
+
+    const subwayLight2 = new THREE.PointLight(0xfef08a, 1.6, 25);
+    subwayLight2.position.set(3, 3.2, 0);
+    scene.add(subwayLight2);
+
+    // Warning Strobe Beacons on Portal
+    const warningBeaconL = new THREE.PointLight(0x10b981, 2, 15);
+    warningBeaconL.position.set(-5.5, 3.8, 4.2);
+    scene.add(warningBeaconL);
+
+    const warningBeaconR = new THREE.PointLight(0x10b981, 2, 15);
+    warningBeaconR.position.set(5.5, 3.8, 4.2);
+    scene.add(warningBeaconR);
+
+    // -------------------------------------------------------------
+    // 3D GEOMETRY CONSTRUCTION
+    // -------------------------------------------------------------
+
+    // 1. Terrain Ground Base (Surrounding Ground Level at Y = 1.0)
+    const groundGeo = new THREE.PlaneGeometry(120, 120);
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.9 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = 1.0;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // 2. Depressed Subway Roadway
+    const floorGeo = new THREE.BoxGeometry(11, 0.5, 30);
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7 });
+    const subwayFloor = new THREE.Mesh(floorGeo, floorMat);
+    subwayFloor.position.set(0, -1.8, 0);
+    subwayFloor.receiveShadow = true;
+    scene.add(subwayFloor);
+
+    // South Incline Ramp
+    const rampSouthGeo = new THREE.BoxGeometry(11, 0.5, 26);
+    const rampSouth = new THREE.Mesh(rampSouthGeo, floorMat);
+    rampSouth.position.set(0, -0.4, 27);
+    rampSouth.rotation.x = -0.11;
+    rampSouth.receiveShadow = true;
+    scene.add(rampSouth);
+
+    // North Incline Ramp
+    const rampNorthGeo = new THREE.BoxGeometry(11, 0.5, 26);
+    const rampNorth = new THREE.Mesh(rampNorthGeo, floorMat);
+    rampNorth.position.set(0, -0.4, -27);
+    rampNorth.rotation.x = 0.11;
+    rampNorth.receiveShadow = true;
+    scene.add(rampNorth);
+
+    // Road Markings (Yellow center line)
+    const dividerGeo = new THREE.PlaneGeometry(0.35, 28);
+    const dividerMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+    const divider = new THREE.Mesh(dividerGeo, dividerMat);
+    divider.rotation.x = -Math.PI / 2;
+    divider.position.set(0, -1.54, 0);
+    scene.add(divider);
+
+    // 3. Concrete Retaining Walls
+    const wallGeo = new THREE.BoxGeometry(1, 4.0, 32);
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.8 });
+
+    const wallLeft = new THREE.Mesh(wallGeo, wallMat);
+    wallLeft.position.set(-5.6, 0.2, 0);
+    wallLeft.castShadow = true;
+    wallLeft.receiveShadow = true;
+    scene.add(wallLeft);
+
+    const wallRight = new THREE.Mesh(wallGeo, wallMat);
+    wallRight.position.set(5.6, 0.2, 0);
+    wallRight.castShadow = true;
+    wallRight.receiveShadow = true;
+    scene.add(wallRight);
+
+    // 4. Overhead Railway Embankment & Steel Bridge
+    const bridgeGroup = new THREE.Group();
+
+    // Heavy concrete bridge deck
+    const deckGeo = new THREE.BoxGeometry(20, 1.2, 8);
+    const deckMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.6 });
+    const bridgeDeck = new THREE.Mesh(deckGeo, deckMat);
+    bridgeDeck.position.set(0, 3.4, 0);
+    bridgeDeck.castShadow = true;
+    bridgeGroup.add(bridgeDeck);
+
+    // Steel Girders
+    const girderMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.4 });
+    const girder1 = new THREE.Mesh(new THREE.BoxGeometry(13, 0.6, 0.5), girderMat);
+    girder1.position.set(0, 2.6, -3.6);
+    bridgeGroup.add(girder1);
+
+    const girder2 = new THREE.Mesh(new THREE.BoxGeometry(13, 0.6, 0.5), girderMat);
+    girder2.position.set(0, 2.6, 3.6);
+    bridgeGroup.add(girder2);
+
+    // Dual Railway Tracks
+    const railMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.2 });
+    [-2.2, -1.2, 1.2, 2.2].forEach(offsetZ => {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(30, 0.15, 0.15), railMat);
+      rail.position.set(0, 4.15, offsetZ);
+      bridgeGroup.add(rail);
+    });
+
+    // Railway wooden ties
+    const tieMat = new THREE.MeshStandardMaterial({ color: 0x3f2e21, roughness: 0.9 });
+    for (let x = -14; x <= 14; x += 1.2) {
+      const tie1 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 1.8), tieMat);
+      tie1.position.set(x, 4.05, -1.7);
+      bridgeGroup.add(tie1);
+
+      const tie2 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 1.8), tieMat);
+      tie2.position.set(x, 4.05, 1.7);
+      bridgeGroup.add(tie2);
+    }
+
+    // Clearance Height Sign
+    const bannerGeo = new THREE.BoxGeometry(11, 0.8, 0.2);
+    const bannerMat = new THREE.MeshBasicMaterial({ color: 0xd97706 });
+    const banner = new THREE.Mesh(bannerGeo, bannerMat);
+    banner.position.set(0, 3.4, 4.15);
+    bridgeGroup.add(banner);
+
+    scene.add(bridgeGroup);
+
+    // 5. Underground Stormwater Drain (SWD) Sump Cutaway
+    const sumpGroup = new THREE.Group();
+
+    // Sump Chamber Pit (transparent front)
+    const sumpBoxGeo = new THREE.BoxGeometry(6, 2.6, 6);
+    const sumpMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      transparent: true,
+      opacity: 0.65,
+      roughness: 0.5
+    });
+    const sumpBox = new THREE.Mesh(sumpBoxGeo, sumpMat);
+    sumpBox.position.set(0, -3.4, 0);
+    sumpGroup.add(sumpBox);
+
+    // Sump Water Mesh
+    const sumpWaterGeo = new THREE.BoxGeometry(5.8, 1, 5.8);
+    const sumpWaterMat = new THREE.MeshStandardMaterial({
+      color: 0x059669,
+      transparent: true,
+      opacity: 0.8,
+      roughness: 0.1
+    });
+    const sumpWaterMesh = new THREE.Mesh(sumpWaterGeo, sumpWaterMat);
+    sumpWaterMesh.position.set(0, -4.2, 0);
+    sumpGroup.add(sumpWaterMesh);
+
+    // 100HP Centrifugal Pump Housing
+    const pumpMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.6, roughness: 0.3 });
+    const pumpHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.7, 1.2, 16), pumpMat);
+    pumpHousing.position.set(1.6, -3.2, 0);
+    sumpGroup.add(pumpHousing);
+
+    // Impeller
+    const impellerMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const impeller = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.8), impellerMat);
+    impeller.position.set(1.6, -3.7, 0);
+    sumpGroup.add(impeller);
+
+    // Discharge Pipe
+    const pipeGeo = new THREE.CylinderGeometry(0.25, 0.25, 14, 12);
+    const pipeMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.5 });
+    const dischargePipe = new THREE.Mesh(pipeGeo, pipeMat);
+    dischargePipe.rotation.z = Math.PI / 2;
+    dischargePipe.position.set(8, -3.0, 0);
+    sumpGroup.add(dischargePipe);
+
+    // Road Drainage Inlet Grate
+    const grateGeo = new THREE.PlaneGeometry(2.5, 2.5);
+    const grateMat = new THREE.MeshBasicMaterial({ color: 0x0f172a, wireframe: true });
+    const grate = new THREE.Mesh(grateGeo, grateMat);
+    grate.rotation.x = -Math.PI / 2;
+    grate.position.set(0, -1.54, 0);
+    sumpGroup.add(grate);
+
+    scene.add(sumpGroup);
+
+    // 6. Surface Flood Water Mesh
+    const floodWaterGeo = new THREE.BoxGeometry(10.8, 1, 28);
+    const floodWaterMat = new THREE.MeshStandardMaterial({
+      color: 0x0284c7,
+      transparent: true,
+      opacity: 0.78,
+      roughness: 0.08,
+      metalness: 0.2
+    });
+    const floodWaterMesh = new THREE.Mesh(floodWaterGeo, floodWaterMat);
+    floodWaterMesh.position.set(0, -1.55, 0);
+    floodWaterMesh.scale.set(1, 0.01, 1);
+    scene.add(floodWaterMesh);
+
+    // 7. Depth Measuring Ruler
+    const rulerGroup = new THREE.Group();
+    const poleGeo = new THREE.CylinderGeometry(0.08, 0.08, 3.2, 12);
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+    const pole = new THREE.Mesh(poleGeo, poleMat);
+    pole.position.set(4.5, -0.2, -1.5);
+    rulerGroup.add(pole);
+
+    const bandMatGreen = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+    const bandMatAmber = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+    const bandMatRed = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+
+    const band1 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.06, 12), bandMatGreen);
+    band1.position.set(4.5, -1.35, -1.5); // 15cm
+    rulerGroup.add(band1);
+
+    const band2 = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.06, 12), bandMatAmber);
+    band2.position.set(4.5, -1.2, -1.5); // 25cm
+    rulerGroup.add(band2);
+
+    const band3 = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.06, 12), bandMatRed);
+    band3.position.set(4.5, -0.9, -1.5); // 45cm
+    rulerGroup.add(band3);
+
+    scene.add(rulerGroup);
+
+    // 8. 3D Vehicle Models
+    const vehiclesGroup = new THREE.Group();
+
+    // Car (Sedan)
+    const carGroup = new THREE.Group();
+    const carBody = new THREE.Mesh(
+      new THREE.BoxGeometry(2.0, 0.7, 4.2),
+      new THREE.MeshStandardMaterial({ color: 0x4f46e5, metalness: 0.6, roughness: 0.3 })
+    );
+    carBody.position.set(0, 0.6, 0);
+    carBody.castShadow = true;
+    carGroup.add(carBody);
+
+    const carRoof = new THREE.Mesh(
+      new THREE.BoxGeometry(1.6, 0.6, 2.2),
+      new THREE.MeshStandardMaterial({ color: 0x312e81, roughness: 0.2 })
+    );
+    carRoof.position.set(0, 1.2, -0.2);
+    carRoof.castShadow = true;
+    carGroup.add(carRoof);
+
+    // Car wheels
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.9 });
+    const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.25, 16);
+    [[-1.0, 1.3], [1.0, 1.3], [-1.0, -1.3], [1.0, -1.3]].forEach(([x, z]) => {
+      const w = new THREE.Mesh(wheelGeo, wheelMat);
+      w.rotation.z = Math.PI / 2;
+      w.position.set(x, 0.35, z);
+      w.castShadow = true;
+      carGroup.add(w);
+    });
+
+    carGroup.position.set(-2.2, -1.55, 1.5);
+    vehiclesGroup.add(carGroup);
+
+    // 2-Wheeler Motorcycle
+    const bikeGroup = new THREE.Group();
+    const bikeFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(0.4, 0.6, 1.8),
+      new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4 })
+    );
+    bikeFrame.position.set(0, 0.6, 0);
+    bikeGroup.add(bikeFrame);
+
+    const bikeWheel1 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.1, 12), wheelMat);
+    bikeWheel1.rotation.z = Math.PI / 2;
+    bikeWheel1.position.set(0, 0.3, 0.8);
+    bikeGroup.add(bikeWheel1);
+
+    const bikeWheel2 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.1, 12), wheelMat);
+    bikeWheel2.rotation.z = Math.PI / 2;
+    bikeWheel2.position.set(0, 0.3, -0.8);
+    bikeGroup.add(bikeWheel2);
+
+    bikeGroup.position.set(2.4, -1.55, -2.0);
+    vehiclesGroup.add(bikeGroup);
+
+    scene.add(vehiclesGroup);
+
+    // 9. 3D Rainfall Particle System
+    const RAIN_COUNT = 1500;
+    const rainGeo = new THREE.BufferGeometry();
+    const rainPositions = new Float32Array(RAIN_COUNT * 3);
+
+    for (let i = 0; i < RAIN_COUNT * 3; i += 3) {
+      rainPositions[i] = (Math.random() - 0.5) * 60;
+      rainPositions[i + 1] = Math.random() * 30 + 1;
+      rainPositions[i + 2] = (Math.random() - 0.5) * 60;
+    }
+
+    rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
+    const rainMat = new THREE.PointsMaterial({
+      color: 0x38bdf8,
+      size: 0.2,
+      transparent: true,
+      opacity: 0.0
+    });
+    const rainSystem = new THREE.Points(rainGeo, rainMat);
+    scene.add(rainSystem);
+
+    // -------------------------------------------------------------
+    // STATE & ANIMATION LOOP
+    // -------------------------------------------------------------
+    let targetWaterDepth = 0;
+    let currentWaterDepth = 0;
+    let rainIntensity = 0;
+    let isPumpRunning = false;
+    let clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const delta = clock.getDelta();
+      const time = clock.getElapsedTime();
+
+      if (controls) controls.update();
+
+      // Smooth water level interpolation
+      currentWaterDepth += (targetWaterDepth - currentWaterDepth) * 0.08;
+
+      if (currentWaterDepth > 0.01) {
+        floodWaterMesh.visible = true;
+        const depthHeight = currentWaterDepth * 2.5; // Clear visual demonstration
+        floodWaterMesh.scale.y = Math.max(0.01, depthHeight);
+        floodWaterMesh.position.y = -1.55 + depthHeight / 2;
+        floodWaterMesh.rotation.y = Math.sin(time * 0.5) * 0.005;
+      } else {
+        floodWaterMesh.visible = false;
+      }
+
+      // Sump water height
+      const sumpPct = Math.min(1.0, (state.rainIntensity * state.rainDuration * 0.2 + 0.24));
+      sumpWaterMesh.scale.y = Math.max(0.1, sumpPct * 2.2);
+      sumpWaterMesh.position.y = -4.7 + (sumpWaterMesh.scale.y / 2);
+
+      // Pump impeller rotation
+      if (isPumpRunning) {
+        impeller.rotation.y += 0.4;
+        if (targetWaterDepth > 0) {
+          targetWaterDepth = Math.max(0, targetWaterDepth - 0.004);
+        }
+      }
+
+      // Rain Particles animation
+      if (rainIntensity > 0) {
+        rainMat.opacity = Math.min(0.85, 0.2 + (rainIntensity / 120) * 0.65);
+        const positions = rainGeo.attributes.position.array;
+        const fallSpeed = 0.4 + (rainIntensity / 100) * 0.6;
+
+        for (let i = 1; i < RAIN_COUNT * 3; i += 3) {
+          positions[i] -= fallSpeed;
+          if (positions[i] < -1.8) {
+            positions[i] = 28 + Math.random() * 5;
+          }
+        }
+        rainGeo.attributes.position.needsUpdate = true;
+      } else {
+        rainMat.opacity = 0;
+      }
+
+      // Beacon lights flash if flooded
+      if (currentWaterDepth >= 0.25) {
+        const flash = Math.sin(time * 12) > 0;
+        warningBeaconL.color.setHex(flash ? 0xef4444 : 0x450a0a);
+        warningBeaconR.color.setHex(flash ? 0xef4444 : 0x450a0a);
+        warningBeaconL.intensity = flash ? 3 : 0.2;
+        warningBeaconR.intensity = flash ? 3 : 0.2;
+      } else if (currentWaterDepth >= 0.15) {
+        warningBeaconL.color.setHex(0xf59e0b);
+        warningBeaconR.color.setHex(0xf59e0b);
+        warningBeaconL.intensity = 1.5;
+        warningBeaconR.intensity = 1.5;
+      } else {
+        warningBeaconL.color.setHex(0x10b981);
+        warningBeaconR.color.setHex(0x10b981);
+        warningBeaconL.intensity = 1.0;
+        warningBeaconR.intensity = 1.0;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    function onResize() {
+      if (!container) return;
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+    window.addEventListener('resize', onResize);
+
+    // CONTROLLER METHODS
+    twinSim = {
+      updateWaterAndRain(depthMeters, intensity, status, sumpVol) {
+        targetWaterDepth = depthMeters;
+        rainIntensity = intensity;
+
+        const depthVal = document.getElementById('twin-depth-val');
+        const statusBadge = document.getElementById('twin-status-badge');
+        const rainDisp = document.getElementById('twin-rain-val');
+        const rainSlider = document.getElementById('twin-rain-slider');
+
+        if (depthVal) depthVal.textContent = (depthMeters * 100).toFixed(0);
+        if (rainDisp) rainDisp.textContent = `${intensity} mm/hr`;
+        if (rainSlider && document.activeElement !== rainSlider) rainSlider.value = intensity;
+
+        if (statusBadge) {
+          if (depthMeters <= 0.08) {
+            statusBadge.className = 'gauge-status safe';
+            statusBadge.textContent = 'PASSABLE (<10cm)';
+          } else if (depthMeters <= 0.25) {
+            statusBadge.className = 'gauge-status warning';
+            statusBadge.textContent = 'CAUTION (10-25cm)';
+          } else {
+            statusBadge.className = 'gauge-status danger';
+            statusBadge.textContent = '⛔ SUBWAY FLOODED';
+          }
+        }
+
+        const statBike = document.getElementById('tv-stat-bike');
+        const statCar = document.getElementById('tv-stat-car');
+        const statAmb = document.getElementById('tv-stat-amb');
+
+        if (statBike) {
+          if (depthMeters >= 0.15) {
+            statBike.className = 'tv-stat danger';
+            statBike.textContent = 'Stalled (>15cm)';
+          } else {
+            statBike.className = 'tv-stat safe';
+            statBike.textContent = 'Safe (<15cm)';
+          }
+        }
+
+        if (statCar) {
+          if (depthMeters >= 0.25) {
+            statCar.className = 'tv-stat danger';
+            statCar.textContent = 'Intake Submerged (>25cm)';
+          } else {
+            statCar.className = 'tv-stat safe';
+            statCar.textContent = 'Safe (<25cm)';
+          }
+        }
+
+        if (statAmb) {
+          if (depthMeters >= 0.45) {
+            statAmb.className = 'tv-stat danger';
+            statAmb.textContent = 'Exhaust Blocked (>45cm)';
+          } else {
+            statAmb.className = 'tv-stat safe';
+            statAmb.textContent = 'Safe (<45cm)';
+          }
+        }
+      },
+
+      setCameraView(type) {
+        if (!controls) return;
+        if (type === 'orbit') {
+          camera.position.set(24, 18, 28);
+          controls.target.set(0, 0, 0);
+        } else if (type === 'driver') {
+          camera.position.set(-2.2, -0.6, 6);
+          controls.target.set(-2.2, -1.2, -8);
+        } else if (type === 'cutaway') {
+          camera.position.set(26, -1.0, 0);
+          controls.target.set(0, -2.5, 0);
+        }
+        controls.update();
+      },
+
+      togglePump() {
+        isPumpRunning = !isPumpRunning;
+        const btn = document.getElementById('btn-twin-pump');
+        const stateTxt = document.getElementById('twin-pump-state');
+        if (btn && stateTxt) {
+          btn.classList.toggle('running', isPumpRunning);
+          stateTxt.textContent = isPumpRunning ? 'RUNNING (DISCHARGING)' : 'STANDBY';
+        }
+      },
+
+      resize() {
+        onResize();
+      }
+    };
+  }
+
+  // =========================================================================
+  // 11. 3D DIGITAL TWIN MODAL WIRING & INTERACTIVITY
+  // =========================================================================
+  const twinModal = document.getElementById('twin-modal');
+  const btnToggle3D = document.getElementById('btn-toggle-3d');
+  const btnOpen3DHud = document.getElementById('btn-open-3d-hud');
+  const btnClose3D = document.getElementById('btn-close-3d');
+
+  function open3DModal() {
+    if (!twinModal) return;
+    twinModal.classList.remove('hidden');
+
+    const subwayName = document.getElementById('twin-subway-name');
+    if (subwayName) {
+      subwayName.textContent = state.currentCorridor === 'south'
+        ? 'Thillai Ganga Nagar Subway (South Chennai - Zone 12)'
+        : 'Ganesapuram Subway (North Chennai - Vyasarpadi)';
+    }
+
+    setTimeout(() => {
+      if (!twinSim) {
+        init3DTwinSimulation();
+      }
+      if (twinSim) {
+        twinSim.resize();
+        twinSim.updateWaterAndRain(state.sensor.waterDepthMeters, state.rainIntensity, state.sensor.status, 0);
+      }
+    }, 60);
+  }
+
+  function close3DModal() {
+    if (twinModal) twinModal.classList.add('hidden');
+  }
+
+  if (btnToggle3D) btnToggle3D.addEventListener('click', open3DModal);
+  if (btnOpen3DHud) btnOpen3DHud.addEventListener('click', open3DModal);
+  if (btnClose3D) btnClose3D.addEventListener('click', close3DModal);
+
+  // Close on backdrop click
+  if (twinModal) {
+    twinModal.addEventListener('click', (e) => {
+      if (e.target === twinModal) close3DModal();
+    });
+  }
+
+  // Close on Escape key
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && twinModal && !twinModal.classList.contains('hidden')) {
+      close3DModal();
+    }
+  });
+
+  // Camera Presets
+  const camOrbit = document.getElementById('cam-orbit');
+  const camDriver = document.getElementById('cam-driver');
+  const camCutaway = document.getElementById('cam-cutaway');
+
+  function setCamActive(activeBtn, view) {
+    [camOrbit, camDriver, camCutaway].forEach(b => { if (b) b.classList.remove('active'); });
+    if (activeBtn) activeBtn.classList.add('active');
+    if (twinSim) twinSim.setCameraView(view);
+  }
+
+  if (camOrbit) camOrbit.addEventListener('click', () => setCamActive(camOrbit, 'orbit'));
+  if (camDriver) camDriver.addEventListener('click', () => setCamActive(camDriver, 'driver'));
+  if (camCutaway) camCutaway.addEventListener('click', () => setCamActive(camCutaway, 'cutaway'));
+
+  // 3D Studio Scenario Buttons
+  const twinBtnClear = document.getElementById('twin-btn-clear');
+  const twinBtnRain = document.getElementById('twin-btn-rain');
+  const twinBtnDeluge = document.getElementById('twin-btn-deluge');
+
+  function set3DScenarioActive(btn, preset) {
+    [twinBtnClear, twinBtnRain, twinBtnDeluge].forEach(b => { if (b) b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    setScenarioPreset(preset);
+  }
+
+  if (twinBtnClear) twinBtnClear.addEventListener('click', () => set3DScenarioActive(twinBtnClear, 'clear'));
+  if (twinBtnRain) twinBtnRain.addEventListener('click', () => set3DScenarioActive(twinBtnRain, 'rain2h'));
+  if (twinBtnDeluge) twinBtnDeluge.addEventListener('click', () => set3DScenarioActive(twinBtnDeluge, 'deluge'));
+
+  // 3D Studio Pump Trigger
+  const btnTwinPump = document.getElementById('btn-twin-pump');
+  if (btnTwinPump) {
+    btnTwinPump.addEventListener('click', () => {
+      if (twinSim) twinSim.togglePump();
+    });
+  }
+
+  // 3D Studio Rain Slider
+  const twinRainSlider = document.getElementById('twin-rain-slider');
+  if (twinRainSlider) {
+    twinRainSlider.addEventListener('input', (e) => {
+      state.rainIntensity = parseInt(e.target.value, 10);
+      calculateHydrology();
+    });
+  }
+
   // Initial Execution
+  initMapRainCanvas();
   calculateHydrology();
   addLog('system', 'Chennai Jal-Marg engine initialized. MoES SIH-26085 prototype active.');
 });

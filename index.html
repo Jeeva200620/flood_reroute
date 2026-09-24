@@ -17,7 +17,7 @@
   <!-- Main Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="theme-dark">
+<body class="theme-light">
 
   <!-- =====================================================================
        1. TOP COMPACT FLOATING BAR (HUD) - BALANCED & RESPONSIVE
@@ -50,7 +50,7 @@
         <strong id="disp-drain-surcharge" class="chip-val">24% (120L)</strong>
       </div>
       <div class="tele-chip" id="chip-reservoir">
-        <span class="chip-dot cyan"></span>
+        <span class="chip-dot amber"></span>
         <span class="chip-title">RESERVOIRS:</span>
         <strong id="disp-reservoir" class="chip-val">39.4% (5,210 MCFT)</strong>
       </div>
@@ -58,6 +58,12 @@
 
     <!-- Mode & Action Buttons -->
     <div class="hud-actions">
+      <!-- 3D Digital Twin Simulation Button -->
+      <button id="btn-toggle-3d" class="btn-hud btn-3d-highlight" title="Launch Interactive 3D Subway Inundation & Hydraulic Simulator">
+        <span class="btn-icon">🧊</span>
+        <span>3D Twin Sim</span>
+      </button>
+
       <!-- Mode Toggle: Google Maps vs Jal-Marg -->
       <div class="mode-toggle-group" title="Demonstrate Google Maps flaw vs Jal-Marg hydrological reroute">
         <button id="btn-mode-jalmarg" class="btn-mode active">
@@ -85,6 +91,7 @@
        ===================================================================== -->
   <main class="map-container">
     <div id="map"></div>
+    <canvas id="map-rain-canvas" class="map-rain-overlay"></canvas>
 
     <!-- FLOATING MAP LAYER SWITCHER (Top Right beside Zoom Controls) -->
     <div class="floating-layer-switcher">
@@ -108,6 +115,7 @@
           <span class="sub-item" id="nav-eta">⏱️ ETA: 8 mins</span>
           <span class="sub-item" id="nav-water-depth">💧 Water: 0 cm</span>
           <span class="sub-item highlight" id="nav-lead-time">⏳ Lead Time: Safe</span>
+          <button id="btn-open-3d-hud" class="btn-mini-3d" title="Inspect 3D Subway Cross-Section">🧊 3D Subway View</button>
         </div>
       </div>
       <div class="nav-corridor-switch">
@@ -116,6 +124,7 @@
           <span id="corridor-name">South Chennai</span>
         </button>
       </div>
+    </div>
     </div>
 
     <!-- FLOATING LEFT PANEL: JUDGE 3-STEP CONTROLLER & VEHICLE PROFILES -->
@@ -234,10 +243,10 @@
       </div>
       <div class="legend-items">
         <div class="leg-row"><span class="leg-pill green"></span> <strong>Green:</strong> Subway Dry (&lt;10cm, Direct Route)</div>
-        <div class="leg-row"><span class="leg-pill orange"></span> <strong>Orange:</strong> Warning (10–25cm, Slow Traffic)</div>
-        <div class="leg-row"><span class="leg-pill red"></span> <strong>Red:</strong> Submerged (&gt;25cm, Reroute Triggered)</div>
-        <div class="leg-row"><span class="leg-pill cyan-dashed"></span> <strong>Cyan Dashed:</strong> Safe High-Ground Flyover Bypass</div>
-        <div class="leg-row"><span class="leg-pill blue-dotted"></span> <strong>Blue Dotted:</strong> Buckingham Canal & Sea Gateways</div>
+        <div class="leg-row"><span class="leg-pill orange"></span> <strong>Amber:</strong> Warning (10–25cm, Slow Traffic)</div>
+        <div class="leg-row"><span class="leg-pill red"></span> <strong>Red:</strong> Submerged (&gt;25cm, Subway Closed)</div>
+        <div class="leg-row"><span class="leg-pill amber-solid"></span> <strong>Gold Solid:</strong> Safe High-Ground Flyover Bypass</div>
+        <div class="leg-row"><span class="leg-pill teal-dotted"></span> <strong>Teal Dotted:</strong> Buckingham Canal & Sea Gateways</div>
       </div>
     </div>
 
@@ -324,9 +333,107 @@
     </div>
   </div>
 
+  <!-- =====================================================================
+       4. 3D DIGITAL TWIN SIMULATION STUDIO (PHYSICAL HYDRAULIC & SUBWAY TWIN)
+       ===================================================================== -->
+  <div class="twin-modal-backdrop hidden" id="twin-modal">
+    <div class="twin-modal-card">
+      <div class="twin-header">
+        <div class="twin-title-col">
+          <div class="twin-title-row">
+            <span class="twin-badge">PHYSICAL 3D DIGITAL TWIN</span>
+            <h3 id="twin-subway-name">Thillai Ganga Nagar Subway (South Chennai)</h3>
+          </div>
+          <p class="twin-subtitle">3D Hydraulic Coupling • Railway Underpass Inundation & Surcharge Dynamics</p>
+        </div>
+
+        <div class="twin-header-actions">
+          <!-- Camera Presets -->
+          <div class="cam-btn-group">
+            <button class="btn-cam active" id="cam-orbit" title="Orbit & Rotate 360°">🛸 3D Orbit</button>
+            <button class="btn-cam" id="cam-driver" title="Driver Cockpit View">🚗 Driver POV</button>
+            <button class="btn-cam" id="cam-cutaway" title="Sub-surface Drainage Cross Section">🔬 Sump Cutaway</button>
+          </div>
+          <button id="btn-close-3d" class="btn-close-twin" title="Close 3D Simulation">&times;</button>
+        </div>
+      </div>
+
+      <!-- 3D Canvas Viewport -->
+      <div class="twin-canvas-container" id="twin-canvas-container">
+        <!-- Three.js Canvas injected here -->
+        
+        <!-- Floating Live 3D Overlay Telemetry -->
+        <div class="twin-hud-overlay">
+          <!-- Live Water Gauge -->
+          <div class="gauge-card">
+            <span class="gauge-label">SUBWAY INUNDATION</span>
+            <div class="gauge-reading">
+              <span id="twin-depth-val" class="gauge-num">0</span>
+              <span class="gauge-unit">cm</span>
+            </div>
+            <div class="gauge-status safe" id="twin-status-badge">PASSABLE</div>
+          </div>
+
+          <!-- Vehicle Submersion Risk Matrix -->
+          <div class="twin-vehicle-matrix">
+            <div class="tv-item" id="tv-bike">
+              <span class="tv-icon">🏍️</span>
+              <div class="tv-info">
+                <strong>2-Wheeler (15cm)</strong>
+                <span class="tv-stat safe" id="tv-stat-bike">Safe (&lt; 15cm)</span>
+              </div>
+            </div>
+            <div class="tv-item" id="tv-car">
+              <span class="tv-icon">🚗</span>
+              <div class="tv-info">
+                <strong>Car (25cm)</strong>
+                <span class="tv-stat safe" id="tv-stat-car">Safe (&lt; 25cm)</span>
+              </div>
+            </div>
+            <div class="tv-item" id="tv-amb">
+              <span class="tv-icon">🚑</span>
+              <div class="tv-info">
+                <strong>Ambulance (45cm)</strong>
+                <span class="tv-stat safe" id="tv-stat-amb">Safe (&lt; 45cm)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating 3D Controls Bar (Bottom of 3D Canvas) -->
+        <div class="twin-bottom-bar">
+          <!-- 1-Click Scenario Trigger Inside 3D -->
+          <div class="twin-scenarios">
+            <button class="twin-scen-btn active" id="twin-btn-clear">☀️ Dry (0 mm/h)</button>
+            <button class="twin-scen-btn" id="twin-btn-rain">🌦️ 1-2h Rain (45 mm/h)</button>
+            <button class="twin-scen-btn danger" id="twin-btn-deluge">⛈️ Deluge (110 mm/h)</button>
+          </div>
+
+          <!-- Interactive Pump Control -->
+          <div class="twin-pump-control">
+            <button id="btn-twin-pump" class="btn-twin-action">
+              <span class="pump-icon">🚜</span>
+              <span>100HP Sump Pump: <strong id="twin-pump-state">STANDBY</strong></span>
+            </button>
+          </div>
+
+          <!-- Rain Slider inside 3D -->
+          <div class="twin-slider-box">
+            <label for="twin-rain-slider">🌧️ Live Rain: <strong id="twin-rain-val">0 mm/hr</strong></label>
+            <input type="range" id="twin-rain-slider" min="0" max="150" value="0">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   
+  <!-- Three.js 3D Engine & OrbitControls for Physical Digital Twin -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
   <!-- Main Application Logic -->
   <script src="app.js"></script>
 </body>
